@@ -4,6 +4,9 @@ from kivymd.uix.screen import MDScreen
 
 
 class HomeScreen(MDScreen):
+
+    name = "home"
+
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.add_widget(
@@ -17,11 +20,13 @@ class HomeScreen(MDScreen):
             MDRectangleFlatButton(
                 text="CHAT SCREEN",
                 pos_hint={"center_x": 0.25, "center_y": 0.5},
+                on_release=lambda *args: self.manager.goto_screen("chat"),
             )
         )
         self.add_widget(
             MDRectangleFlatButton(
                 text="SETTINGS SCREEN",
                 pos_hint={"center_x": 0.75, "center_y": 0.5},
+                on_release=lambda *args: self.manager.goto_screen("settings"),
             )
         )
