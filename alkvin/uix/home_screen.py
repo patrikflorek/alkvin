@@ -1,32 +1,55 @@
-from kivymd.uix.button import MDRectangleFlatButton
-from kivymd.uix.label import MDLabel
+from kivy.lang import Builder
+from kivy.properties import ListProperty
+
 from kivymd.uix.screen import MDScreen
 
 
-class HomeScreen(MDScreen):
+from alkvin.data import load_chat_ids
 
-    name = "home"
+
+class HomeScreen(MDScreen):
+    chat_ids = ListProperty()
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.add_widget(
-            MDLabel(
-                text="HOME SCREEN",
-                halign="center",
-                pos_hint={"center_x": 0.5, "center_y": 0.75},
-            )
-        )
-        self.add_widget(
-            MDRectangleFlatButton(
-                text="CHAT SCREEN",
-                pos_hint={"center_x": 0.25, "center_y": 0.5},
-                on_release=lambda *args: self.manager.goto_screen("chat"),
-            )
-        )
-        self.add_widget(
-            MDRectangleFlatButton(
-                text="SETTINGS SCREEN",
-                pos_hint={"center_x": 0.75, "center_y": 0.5},
-                on_release=lambda *args: self.manager.goto_screen("settings"),
-            )
-        )
+
+    def on_pre_enter(self, *args):
+        self.chat_ids = load_chat_ids()
+
+
+Builder.load_string(
+    """
+#:import ChatListItem alkvin.uix.components.chats.ChatListItem
+
+
+<HomeScreen>:
+    name: "home"
+
+    MDBoxLayout:
+        orientation: "vertical"
+        MDTopAppBar:
+            title: "Chats"
+            right_action_items: [["cog", lambda x: app.root.goto_screen("settings")]]
+        
+        RecycleView:
+            data: root.chat_ids
+            viewclass: "ChatListItem"
+
+            RecycleBoxLayout:
+                orientation: "vertical"
+                default_size: None, None
+                default_size_hint: 1, None
+                size_hint_y: None
+                height: self.minimum_height
+    
+    AnchorLayout:
+        anchor_x: "right"
+        anchor_y: "bottom"
+        padding: dp(48)        
+        MDFloatingActionButton:
+            icon: "chat"
+            type: "large"
+            elevation_normal: 12
+            on_release: app.root.goto_screen("chat")
+"""
+)
