@@ -1,6 +1,7 @@
 from kivy.lang import Builder
-from kivy.properties import ListProperty
+from kivy.properties import ListProperty, StringProperty
 
+from kivymd.uix.list import OneLineListItem
 from kivymd.uix.screen import MDScreen
 
 
@@ -17,11 +18,15 @@ class HomeScreen(MDScreen):
         self.chat_ids = load_chat_ids()
 
 
+class ChatListItem(OneLineListItem):
+    chat_id = StringProperty()
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+
 Builder.load_string(
     """
-#:import ChatListItem alkvin.uix.components.chats.ChatListItem
-
-
 <HomeScreen>:
     name: "home"
 
@@ -51,5 +56,11 @@ Builder.load_string(
             type: "large"
             elevation_normal: 12
             on_release: app.root.goto_screen("chat")
+
+
+<ChatListItem>:
+    chat_id: ""
+    text: self.chat_id
+    on_release: app.root.goto_screen("chat", chat_id=self.chat_id)
 """
 )

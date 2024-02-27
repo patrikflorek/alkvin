@@ -3,6 +3,7 @@ import os
 from kivy.lang import Builder
 from kivy.properties import ListProperty, StringProperty
 
+from kivymd.uix.list import OneLineListItem
 from kivymd.uix.screen import MDScreen
 
 
@@ -70,7 +71,7 @@ Builder.load_string(
                 default_size_hint: 1, None
                 size_hint_y: None
                 height: self.minimum_height
-                padding: dp(40), dp(80), dp(40), dp(40)
+                padding: dp(40), dp(96), dp(40), dp(40)
                 spacing: dp(20)
 
         AudioRecorderBox:
