@@ -13,8 +13,6 @@ from alkvin.data import (
     save_messages,
 )
 
-# from alkvin.uix.components.chat import TestLabel, OldChatBubble
-
 
 class ChatScreen(MDScreen):
     chat_id = StringProperty()
@@ -37,8 +35,8 @@ class ChatScreen(MDScreen):
             message = create_message(
                 self.chat_id,
                 role="user",
-                audio_file=audio_file,
-                audio_created_at=audio_created_at,
+                user_audio_file=audio_file,
+                user_audio_created_at=audio_created_at,
             )
 
             self.messages.append(message)
@@ -93,7 +91,7 @@ Builder.load_string(
             type: "large"
             elevation_normal: 12
             on_release: None
-            md_bg_color: [.5, .5, 1, 1]
+            md_bg_color: [0.2, 0.6, 0.8, 1]
 
     AnchorLayout:
         anchor_x: "left"

@@ -35,22 +35,12 @@ def create_chat(chat_id):
 # Messages
 
 
-def load_messages(chat_id):
-    if not chat_id:
-        return []
-
-    with open(os.path.join(CHATS_PATH, chat_id, "messages.json")) as f:
-        messages = json.load(f)
-
-    return list(map(lambda d: {**d, "chat_id": chat_id}, messages))
-
-
 def create_message(chat_id, **message_data):
     return {
         "chat_id": chat_id,
         "role": message_data["role"],
-        "audio_file": message_data.get("audio_file", ""),
-        "audio_created_at": message_data.get("audio_created_at", ""),
+        "user_audio_file": message_data.get("user_audio_file", ""),
+        "user_audio_created_at": message_data.get("user_audio_created_at", ""),
         "message_sent_at": message_data.get("message_sent_at", ""),
         "transcript_text": message_data.get("transcript_text", ""),
         "transcript_received_at": message_data.get("transcript_received_at", ""),
@@ -62,6 +52,16 @@ def create_message(chat_id, **message_data):
         "tts_audio_received_at": message_data.get("tts_audio_received_at", ""),
         "tts_audio_price": message_data.get("tts_audio_price", ""),
     }
+
+
+def load_messages(chat_id):
+    if not chat_id:
+        return []
+
+    with open(os.path.join(CHATS_PATH, chat_id, "messages.json")) as f:
+        messages_data = json.load(f)
+
+    return list(map(lambda d: create_message(chat_id, **d), messages_data))
 
 
 def save_messages(chat_id, messages):
