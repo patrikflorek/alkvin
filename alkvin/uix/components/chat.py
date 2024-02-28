@@ -1,30 +1,52 @@
 from kivy.lang import Builder
-from kivy.properties import StringProperty
+from kivy.properties import DictProperty, StringProperty
+from kivy.uix.recycleview.views import RecycleDataViewBehavior
 
-from kivymd.uix.list import OneLineListItem
 from kivymd.uix.card import MDCard
 from kivymd.uix.behaviors import RoundedRectangularElevationBehavior
+from kivymd.uix.boxlayout import MDBoxLayout
 
 
-class ChatBubble(MDCard, RoundedRectangularElevationBehavior):
+class ChatBubble(RecycleDataViewBehavior, MDCard):
     chat_id = StringProperty()
     role = StringProperty()
-    text = StringProperty()
-
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+    audio_file = StringProperty()
+    audio_created_at = StringProperty()
+    message_sent_at = StringProperty()
+    transcript_text = StringProperty()
+    transcript_received_at = StringProperty()
+    transcript_price = StringProperty()
+    completion_text = StringProperty()
+    completion_received_at = StringProperty()
+    completion_price = StringProperty()
+    tts_audio_file = StringProperty()
+    tts_audio_received_at = StringProperty()
+    tts_audio_price = StringProperty()
 
 
 Builder.load_string(
     """
 <ChatBubble>:
+    size_hint_y: None
+    md_bg_color: [.2, .6, .8, .6]
+    adaptive_height: True
+    MDBoxLayout:
+        orientation: "vertical"
+        adaptive_height: True
+        padding: "8dp"
+        spacing: "8dp"
+        MDLabel:
+            text: root.chat_id
+            size_hint_y: None
+            height: self.texture_size[1]
+
+<OldChatBubble>:
     role: "assistant"
-    text: ""
     audio_file: ""
     size_hint_y: None
     height: box.height
-    md_bg_color: [1, .4, .2, .2] if self.role == "user" else [.5, .5, 1, .6]
-    radius: [25, 25, 25, 0] if self.role == "user" else [25, 0, 25, 25]
+    md_bg_color: [.4, .4, .4, .3]
+    radius: [25, 25, 25, 25]
 
     MDBoxLayout:
         id: box

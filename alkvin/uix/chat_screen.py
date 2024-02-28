@@ -1,13 +1,19 @@
 import os
-
 from kivy.lang import Builder
 from kivy.properties import ListProperty, StringProperty
 
-from kivymd.uix.list import OneLineListItem
 from kivymd.uix.screen import MDScreen
 
 
-from alkvin.data import get_new_audio_id, get_audio_path, load_messages, save_messages
+from alkvin.data import (
+    get_new_audio_filename,
+    get_audio_path,
+    load_messages,
+    create_message,
+    save_messages,
+)
+
+# from alkvin.uix.components.chat import TestLabel, OldChatBubble
 
 
 class ChatScreen(MDScreen):
@@ -26,28 +32,28 @@ class ChatScreen(MDScreen):
 
     def on_recording(self, instance, recording):
         if not recording:
-            audio_filename = self._save_recording()
+            audio_file, audio_created_at = self._save_recording()
 
-            self.messages.append(
-                {
-                    "chat_id": self.chat_id,
-                    "role": "user",
-                    "audio_file": audio_filename,
-                    "text": "",
-                }
+            message = create_message(
+                self.chat_id,
+                role="user",
+                audio_file=audio_file,
+                audio_created_at=audio_created_at,
             )
+
+            self.messages.append(message)
             save_messages(self.chat_id, self.messages)
 
     def _save_recording(self):
-        audio_path = get_audio_path(self.chat_id, get_new_audio_id())
+        audio_path = get_audio_path(self.chat_id, get_new_audio_filename())
         self.ids.audio_recorder.save(audio_path)
 
-        return os.path.basename(audio_path)
+        return os.path.basename(audio_path), os.path.getmtime(audio_path)
 
 
 Builder.load_string(
     """
-#:import ChatBubble alkvin.uix.components.chats.ChatBubble
+#:import ChatBubble alkvin.uix.components.chat.ChatBubble
 #:import AudioRecorderBox alkvin.uix.components.audio_recorder.AudioRecorderBox
 
 
