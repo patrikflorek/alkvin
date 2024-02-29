@@ -5,10 +5,7 @@ from kivymd.uix.boxlayout import MDBoxLayout
 
 from kivy.lang import Builder
 
-from alkvin.audio import AudioRecorder
-
-
-recorder = AudioRecorder()
+from alkvin.audio import get_audio_recorder
 
 
 class AudioRecorderBox(MDBoxLayout):
@@ -17,6 +14,7 @@ class AudioRecorderBox(MDBoxLayout):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self._controls_timer = None
+        self._recorder = get_audio_recorder()
 
     def on_recording(self, instance, value):
         if value:
@@ -27,7 +25,7 @@ class AudioRecorderBox(MDBoxLayout):
     def _start_recording(self):
         self.ids.recording_timer.text = "00:00"
 
-        recorder.record()
+        self._recorder.record()
 
         self._controls_timer = Clock.schedule_interval(self._update_controls, 0.5)
 
@@ -38,11 +36,11 @@ class AudioRecorderBox(MDBoxLayout):
             return
 
         self.ids.recording_timer.text = (
-            f"{recorder.time // 60:02}:{recorder.time % 60:02}"
+            f"{self._recorder.time // 60:02}:{self._recorder.time % 60:02}"
         )
 
     def _stop_recording(self):
-        recorder.stop()
+        self._recorder.stop()
 
         self._controls_timer.cancel()
         self._controls_timer = None
@@ -50,7 +48,7 @@ class AudioRecorderBox(MDBoxLayout):
         self.ids.recording_timer.text = "00:00"
 
     def save(self, file_path):
-        recorder.save(file_path)
+        self._recorder.save(file_path)
 
 
 Builder.load_string(

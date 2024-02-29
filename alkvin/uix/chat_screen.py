@@ -29,6 +29,7 @@ class ChatScreen(MDScreen):
 
     def on_pre_enter(self, *args):
         self.messages = load_messages(self.chat_id)
+        self.ids.chat_scroll.scroll_y = 1
 
     def on_messages(self, instance, messages):
         self.ids.chat_box.clear_widgets()
@@ -55,6 +56,11 @@ class ChatScreen(MDScreen):
 
         return os.path.basename(audio_path), os.path.getmtime(audio_path)
 
+    def remove_message(self, index):
+        print("remove_message", index)
+        del self.messages[index]
+        save_messages(self.chat_id, self.messages)
+
 
 Builder.load_string(
     """
@@ -72,9 +78,10 @@ Builder.load_string(
             right_action_items: [["dots-vertical", lambda x: None]]
         
         ScrollView:
+            id: chat_scroll
             MDBoxLayout:
                 id: chat_box
-                remove_message: lambda bubble_box: self.remove_widget(bubble_box)
+                remove_message: lambda bubble_box: root.remove_message(self.children[::-1].index(bubble_box))
                 orientation: "vertical"
                 adaptive_height: True
                 padding: dp(40), dp(100), dp(40), dp(80)

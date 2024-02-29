@@ -3,10 +3,7 @@ from kivy.properties import StringProperty
 
 from kivymd.uix.boxlayout import MDBoxLayout
 
-from alkvin.audio import AudioPlayer
-
-
-player = AudioPlayer()
+from alkvin.audio import get_audio_player
 
 
 class AudioPlayerBox(MDBoxLayout):
@@ -15,7 +12,7 @@ class AudioPlayerBox(MDBoxLayout):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self._controls_timer = None
-        self._player = AudioPlayer()
+        self._player = get_audio_player()
 
 
 Builder.load_string(

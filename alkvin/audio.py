@@ -8,6 +8,20 @@ CHANNELS = 1
 RATE = 44100
 
 
+def get_audio_recorder():
+    if not hasattr(get_audio_recorder, "_audio_recorder"):
+        get_audio_recorder._audio_recorder = AudioRecorder()
+
+    return get_audio_recorder._audio_recorder
+
+
+def get_audio_player():
+    if not hasattr(get_audio_player, "_audio_player"):
+        get_audio_player._audio_player = AudioPlayer()
+
+    return get_audio_player._audio_player
+
+
 class AudioRecorder:
     def __init__(self):
         self._p = pyaudio.PyAudio()
@@ -74,17 +88,18 @@ class AudioPlayer:
         return self._stream.get_time()
 
     def play(self, audio_path):
+        print("Playing", self, audio_path)
         if not audio_path:
             return
 
         if self._wf is not None:
             self._wf.close()
 
-        if self._stream is not None and self._stream.is_active():
-            self._stream.close()
-
-        print(f"Playing {audio_path}")
         self._wf = wave.open(audio_path, "rb")
+
+        if self._stream is not None and self._stream.is_active():
+            self._stream.stop_stream()
+            self._stream.close()
 
         self._stream = self._p.open(
             format=self._p.get_format_from_width(self._wf.getsampwidth()),
@@ -95,11 +110,23 @@ class AudioPlayer:
         )
 
     def _stream_callback(self, in_data, frame_count, time_info, status):
-        data = self._wf.readframes(frame_count)
+        if self._wf is None:
+            return b"", pyaudio.paComplete
+
+        try:
+            data = self._wf.readframes(frame_count)
+        except ValueError:
+            print("ValueError", self, self._wf, frame_count)
+            return b"", pyaudio.paComplete
+
         return data, pyaudio.paContinue
 
     def stop(self):
+        if self._wf is not None:
+            self._wf.close()
+
         if self._stream is None:
             return
 
+        self._stream.stop_stream()
         self._stream.close()

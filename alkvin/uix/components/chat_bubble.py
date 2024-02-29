@@ -29,7 +29,7 @@ class ChatBubbleBox(MDBoxLayout):
         self.add_widget(self.bubble)
 
     def close(self):
-        self.parent.remove_widget(self)
+        self.parent.remove_message(self)
 
 
 class BaseChatBubble(MDCard):
