@@ -6,7 +6,7 @@ import string
 
 # Chats
 
-CHATS_PATH = "data/chats/"
+CHATS_PATH = os.path.abspath("data/chats/")
 
 
 def load_chat_ids():
@@ -80,8 +80,11 @@ def save_messages(chat_id, messages):
 
 def get_new_audio_filename():
     """Return a audio name which is 12 characters long random alphanumeric string."""
+    new_audio_filename = (
+        "".join(random.choices(string.ascii_letters + string.digits, k=12)) + ".wav"
+    )
 
-    return "".join(random.choices(string.ascii_letters + string.digits, k=12))
+    return new_audio_filename
 
 
 def get_audio_path(chat_id, audio_filename):

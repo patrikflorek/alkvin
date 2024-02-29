@@ -13,6 +13,8 @@ from alkvin.data import (
     save_messages,
 )
 
+from alkvin.uix.components.chat_bubble import ChatBubbleBox
+
 
 class ChatScreen(MDScreen):
     chat_id = StringProperty()
@@ -27,6 +29,11 @@ class ChatScreen(MDScreen):
 
     def on_pre_enter(self, *args):
         self.messages = load_messages(self.chat_id)
+
+    def on_messages(self, instance, messages):
+        self.ids.chat_box.clear_widgets()
+        for message in messages:
+            self.ids.chat_box.add_widget(ChatBubbleBox(message))
 
     def on_recording(self, instance, recording):
         if not recording:
@@ -51,7 +58,6 @@ class ChatScreen(MDScreen):
 
 Builder.load_string(
     """
-#:import ChatBubble alkvin.uix.components.chat.ChatBubble
 #:import AudioRecorderBox alkvin.uix.components.audio_recorder.AudioRecorderBox
 
 
@@ -65,17 +71,13 @@ Builder.load_string(
             left_action_items: [["arrow-left", lambda x: app.root.goto_previous_screen()]]
             right_action_items: [["dots-vertical", lambda x: None]]
         
-        RecycleView:
-            data: root.messages
-            viewclass: "ChatBubble"
-
-            RecycleBoxLayout:
+        ScrollView:
+            MDBoxLayout:
+                id: chat_box
+                remove_message: lambda bubble_box: self.remove_widget(bubble_box)
                 orientation: "vertical"
-                default_size: None, None
-                default_size_hint: 1, None
-                size_hint_y: None
-                height: self.minimum_height
-                padding: dp(40), dp(96), dp(40), dp(40)
+                adaptive_height: True
+                padding: dp(40), dp(100), dp(40), dp(80)
                 spacing: dp(20)
 
         AudioRecorderBox:

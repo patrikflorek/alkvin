@@ -1,5 +1,3 @@
-import pyaudio
-
 from kivy.clock import Clock
 from kivy.properties import BooleanProperty
 
@@ -10,13 +8,7 @@ from kivy.lang import Builder
 from alkvin.audio import AudioRecorder
 
 
-# PyAudio parameters
-CHUNK = 1024
-FORMAT = pyaudio.paInt16
-CHANNELS = 1
-RATE = 44100
-
-p = pyaudio.PyAudio()
+recorder = AudioRecorder()
 
 
 class AudioRecorderBox(MDBoxLayout):
@@ -25,7 +17,6 @@ class AudioRecorderBox(MDBoxLayout):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self._controls_timer = None
-        self._recorder = AudioRecorder()
 
     def on_recording(self, instance, value):
         if value:
@@ -36,7 +27,7 @@ class AudioRecorderBox(MDBoxLayout):
     def _start_recording(self):
         self.ids.recording_timer.text = "00:00"
 
-        self._recorder.open_stream()
+        recorder.record()
 
         self._controls_timer = Clock.schedule_interval(self._update_controls, 0.5)
 
@@ -46,12 +37,12 @@ class AudioRecorderBox(MDBoxLayout):
             self._controls_timer = None
             return
 
-        time = self._recorder.frame_count // RATE
-
-        self.ids.recording_timer.text = f"{time // 60:02}:{time % 60:02}"
+        self.ids.recording_timer.text = (
+            f"{recorder.time // 60:02}:{recorder.time % 60:02}"
+        )
 
     def _stop_recording(self):
-        self._recorder.close()
+        recorder.stop()
 
         self._controls_timer.cancel()
         self._controls_timer = None
@@ -59,7 +50,7 @@ class AudioRecorderBox(MDBoxLayout):
         self.ids.recording_timer.text = "00:00"
 
     def save(self, file_path):
-        self._recorder.save(file_path)
+        recorder.save(file_path)
 
 
 Builder.load_string(
