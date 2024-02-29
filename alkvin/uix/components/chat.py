@@ -23,11 +23,8 @@ class ChatBubble(RecycleDataViewBehavior, MDCard):
     tts_audio_price = StringProperty()
 
     def refresh_view_attrs(self, rv, index, data):
-        print("refresh_view_attrs", index, data)
-
         if data["role"] == "user":
             self._show_user_message_box()
-            print("role: user")
 
             self.radius = [25, 25, 25, 0]
 
@@ -38,14 +35,17 @@ class ChatBubble(RecycleDataViewBehavior, MDCard):
                 self._show_prepared_message_control_box()
                 self.md_bg_color = [1, 0.4, 0.2, 0.3]
 
+            # if data["transcript_text"]:
+            #     self._hide_transcript_button()
+            # else:
+            #     self._show_transcript_button()
+
         elif data["role"] == "assistant":
             self._show_assistant_message_box()
-            print("role: assistant")
 
             self.radius = [25, 0, 25, 25]
             self.md_bg_color = [0.2, 0.6, 0.8, 0.6]
 
-        print()
         return super().refresh_view_attrs(rv, index, data)
 
     def _show_user_message_box(self):
@@ -72,13 +72,23 @@ class ChatBubble(RecycleDataViewBehavior, MDCard):
 
     def _show_prepared_message_control_box(self):
         self.ids.prepared_message_control_box.disabled = False
-        self.ids.prepared_message_control_box.width = "48dp"
+        self.ids.prepared_message_control_box.width = "24dp"
         self.ids.prepared_message_control_box.opacity = 1
 
     def _hide_prepared_message_control_box(self):
         self.ids.prepared_message_control_box.disabled = True
         self.ids.prepared_message_control_box.width = 0
         self.ids.prepared_message_control_box.opacity = 0
+
+    def _show_transcript_button(self):
+        self.ids.transcript_button.disabled = False
+        self.ids.transcript_button.height = "48dp"
+        self.ids.transcript_button.opacity = 1
+
+    def _hide_transcript_button(self):
+        self.ids.transcript_button.disabled = True
+        self.ids.transcript_button.height = 0
+        self.ids.transcript_button.opacity = 0
 
 
 Builder.load_string(
@@ -128,16 +138,46 @@ Builder.load_string(
             
             AudioPlayerBox:
                 id: user_audio_box               
+            
             MDBoxLayout:
                 id: transcript_box
                 orientation: "vertical"
-                adaptive_height: True
+                size_hint_y: None
+                height: transcript_label.height
+
                 MDIconButton:
+                    id: transcript_button
                     icon: "typewriter"
                     user_font_size: "24dp"
                     theme_text_color: "Custom"
                     text_color: [.4, .4, .4]
+                    size_hint_y: None
+                    height: "48dp"
                     on_release: print("Transcribe audio")
+                    canvas.before:
+                        Color:
+                            rgba: 1, 1, 0, .6
+                        Rectangle:
+                            size: self.size
+                            pos: self.pos
+                
+                MDLabel:
+                    id: transcript_label
+                    text: root.transcript_text
+                    # text_size: self.width, None
+                    theme_text_color: "Custom"
+                    text_color: [.4, .4, .4]
+                    font_style: "Caption"
+                    # size_hint_y: None
+                    # height: self.texture_size[1]
+                    adaptive_height: True
+
+                    canvas.before:
+                        Color:
+                            rgba: 0, 1, 1, .6
+                        Rectangle:
+                            size: self.size
+                            pos: self.pos
 
         MDRelativeLayout:
             id: prepared_message_control_box
