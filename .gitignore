@@ -9,6 +9,7 @@ dist/
 
 # Environments
 venv/
+.env
 
 # Logs
 *.log

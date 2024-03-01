@@ -79,16 +79,22 @@ class AudioPlayer:
         self._p = pyaudio.PyAudio()
         self._stream = None
         self._wf = None
+        self._audio_player_widget = None
 
     @property
-    def time(self):
-        if self._stream is None or not self._stream.is_active():
+    def progress(self):
+        if self._wf is None or self._audio_player_widget is None:
             return 0
 
-        return self._stream.get_time()
+        return self._wf.tell() / self._wf.getnframes()
 
-    def play(self, audio_path):
-        print("Playing", self, audio_path)
+    def is_streaming_widget(self, audio_player_instance):
+        print("is_streaming_widget", self._audio_player_widget, audio_player_instance)
+        return self._audio_player_widget == audio_player_instance
+
+    def play(self, audio_player_instance, audio_path):
+        self._audio_player_widget = audio_player_instance
+
         if not audio_path:
             return
 
@@ -117,15 +123,19 @@ class AudioPlayer:
             data = self._wf.readframes(frame_count)
         except ValueError:
             print("ValueError", self, self._wf, frame_count)
+            self.stop()
+
             return b"", pyaudio.paComplete
 
         return data, pyaudio.paContinue
 
     def stop(self):
+        # self._audio_player_widget = None
+
         if self._wf is not None:
             self._wf.close()
 
-        if self._stream is None:
+        if self._stream is None or self._stream.is_active():
             return
 
         self._stream.stop_stream()
