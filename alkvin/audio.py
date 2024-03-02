@@ -89,7 +89,6 @@ class AudioPlayer:
         return self._wf.tell() / self._wf.getnframes()
 
     def is_streaming_widget(self, audio_player_instance):
-        print("is_streaming_widget", self._audio_player_widget, audio_player_instance)
         return self._audio_player_widget == audio_player_instance
 
     def play(self, audio_player_instance, audio_path):
@@ -130,8 +129,6 @@ class AudioPlayer:
         return data, pyaudio.paContinue
 
     def stop(self):
-        # self._audio_player_widget = None
-
         if self._wf is not None:
             self._wf.close()
 

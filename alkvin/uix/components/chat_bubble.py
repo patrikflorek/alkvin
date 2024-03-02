@@ -1,11 +1,20 @@
+import asyncio
+
 from kivy.lang import Builder
-from kivy.metrics import dp
 from kivy.properties import StringProperty
 
 from kivymd.uix.boxlayout import MDBoxLayout
 from kivymd.uix.card import MDCard
 
 from alkvin.data import get_audio_path
+
+from alkvin.transcription import transcribe_audio
+
+
+async def async_transcribe_audio(audio_path, callback):
+    print("Transcribing audio:", audio_path)
+    transcription = await transcribe_audio(audio_path)
+    callback(transcription.text)
 
 
 class ChatBubbleBox(MDBoxLayout):
@@ -45,6 +54,7 @@ class UserPreparedMessageChatBubble(BaseChatBubble):
 
     def __init__(self, message, **kwargs):
         super().__init__(message, **kwargs)
+        self.message = message
         self.user_audio_file = message["user_audio_file"]
         self.user_audio_path = get_audio_path(self.chat_id, self.user_audio_file)
 
@@ -54,13 +64,41 @@ class UserPreparedMessageChatBubble(BaseChatBubble):
         self.transcript_price = message.get("transcript_price", "")
 
         if self.transcript_text:
-            self.ids.transcript_button_box.disabled = True
-            self.ids.transcript_button_box.height = 0
-            self.ids.transcript_button.opacity = 0
+            self._show_transcript_label()
         else:
-            self.ids.transcript_label.disabled = True
-            self.ids.transcript_label.height = 0
-            self.ids.transcript_label.opacity = 0
+            self._show_transcript_button()
+
+    def _show_transcript_button(self):
+        self.ids.transcript_button_box.disabled = False
+        self.ids.transcript_button_box.height = "48dp"
+        self.ids.transcript_button.opacity = 1
+
+        self.ids.transcript_label.disabled = True
+        self.ids.transcript_label.height = 0
+        self.ids.transcript_label.opacity = 0
+
+    def _show_transcript_label(self):
+        self.ids.transcript_label.disabled = False
+        self.ids.transcript_label.height = "48dp"
+        self.ids.transcript_label.opacity = 1
+
+        self.ids.transcript_button_box.disabled = True
+        self.ids.transcript_button_box.height = 0
+        self.ids.transcript_button.opacity = 0
+
+    def transcribe_audio(self):
+        asyncio.run(
+            async_transcribe_audio(self.user_audio_path, self._update_transcript_text)
+        )
+
+    def _update_transcript_text(self, transcript_text):
+        self.transcript_text = transcript_text
+
+    def on_transcript_text(self, instance, value):
+        self.message["transcript_text"] = value
+        self._show_transcript_label()
+
+        print("Returned transcription:", value)
 
 
 class UserSentMessageChatBubble(BaseChatBubble):
@@ -133,6 +171,7 @@ Builder.load_string(
         AudioPlayerBox:
             id: user_audio_player
             audio_path: root.user_audio_path
+            progress_bar_color: [1, .4, .2, .8]
 
         MDBoxLayout:
             id: transcript_box
@@ -151,7 +190,7 @@ Builder.load_string(
                     text_color: [.4, .4, .4]
                     size_hint_y: None
                     height: "48dp"
-                    on_release: print("Transcribe audio")
+                    on_release: root.transcribe_audio()
 
             MDLabel:
                 id: transcript_label
@@ -196,6 +235,7 @@ Builder.load_string(
     AudioPlayerBox:
         id: user_audio_player
         audio_path: root.user_audio_path
+        progress_bar_color: [1, .4, .2, .8]
 
     MDLabel:
         id: transcript_label
@@ -208,7 +248,7 @@ Builder.load_string(
 
 <AssistantReceivedMessageChatBubble>:
     orientation: "vertical"
-    md_bg_color: [0.2, 0.6, 0.8, 0.6]
+    md_bg_color: [.2, .6, .8, .6]
     radius: [25, 0, 25, 25]
 
     MDLabel:
@@ -239,6 +279,7 @@ Builder.load_string(
 
         AudioPlayerBox:
             id: tts_audio_player
-            audio_path: root.tts_audio_path         
+            audio_path: root.tts_audio_path
+            progress_bar_color: [.2, .6, .8, .8]        
 """
 )

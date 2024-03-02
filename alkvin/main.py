@@ -1,4 +1,6 @@
-import os
+import dotenv
+
+dotenv.load_dotenv()
 
 from kivy.core.window import Window
 

@@ -24,13 +24,6 @@ class AudioPlayerBox(MDBoxLayout):
         self._controls_timer = Clock.schedule_interval(self._update_controls, 0.1)
 
     def _update_controls(self, dt):
-        print(
-            "update_controls",
-            self,
-            self._player.progress,
-            self._player.is_streaming_widget(self),
-        )
-
         if not self._player.is_streaming_widget(self) or self._player.progress == 1.0:
             if self._controls_timer is not None:
                 self._controls_timer.cancel()
@@ -58,6 +51,7 @@ Builder.load_string(
 
 
 <AudioPlayerBox>:
+    progress_bar_color: .4, .4, .4, .8
     orientation: "horizontal"
     size_hint_y: None
     height: "48dp"
@@ -79,6 +73,7 @@ Builder.load_string(
         padding: dp(10), dp(20), dp(30), dp(20)
         PlayingProgressBar:
             id: playing_progress
+            color: root.progress_bar_color
             
 """
 )
