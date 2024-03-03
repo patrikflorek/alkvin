@@ -41,6 +41,7 @@ class AudioRecorder:
         return self._frame_count // RATE
 
     def record(self):
+        self._frames = []
         self._frame_count = 0
 
         self._stream = self._p.open(
@@ -59,11 +60,9 @@ class AudioRecorder:
         return in_data, pyaudio.paContinue
 
     def stop(self):
-        if self._stream is None:
-            return
-
-        self._stream.stop_stream()
-        self._stream.close()
+        if self._stream is not None:
+            self._stream.stop_stream()
+            self._stream.close()
 
     def save(self, file_path):
         wf = wave.open(file_path, "wb")
