@@ -1,23 +1,28 @@
 import os
 
+import multitasking
+
+from kivy.clock import Clock
+
 import openai
-from openai import AsyncOpenAI
+from openai import OpenAI
 
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
-open_ai_async_client = AsyncOpenAI()
+open_ai_client = OpenAI()
 
 
 LANGUAGE = "sk"
 
 
-async def transcribe_audio(audio_path):
+@multitasking.task
+def transcribe_audio(audio_path, callback):
     with open(audio_path, "rb") as af:
-        transcription = await open_ai_async_client.audio.transcriptions.create(
+        transcription = open_ai_client.audio.transcriptions.create(
             model="whisper-1",
             file=af,
             language=LANGUAGE,
             response_format="json",
         )
 
-    return transcription
+    Clock.schedule_once(lambda dt: callback(transcription.text))

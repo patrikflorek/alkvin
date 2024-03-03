@@ -1,5 +1,3 @@
-import asyncio
-
 from kivy.lang import Builder
 from kivy.properties import StringProperty
 
@@ -9,12 +7,6 @@ from kivymd.uix.card import MDCard
 from alkvin.data import get_audio_path
 
 from alkvin.transcription import transcribe_audio
-
-
-async def async_transcribe_audio(audio_path, callback):
-    print("Transcribing audio:", audio_path)
-    transcription = await transcribe_audio(audio_path)
-    callback(transcription.text)
 
 
 class ChatBubbleBox(MDBoxLayout):
@@ -87,18 +79,14 @@ class UserPreparedMessageChatBubble(BaseChatBubble):
         self.ids.transcript_button.opacity = 0
 
     def transcribe_audio(self):
-        asyncio.run(
-            async_transcribe_audio(self.user_audio_path, self._update_transcript_text)
-        )
+        transcribe_audio(self.user_audio_path, self._on_transcription_callback)
 
-    def _update_transcript_text(self, transcript_text):
-        self.transcript_text = transcript_text
+    def _on_transcription_callback(self, text):
+        self.transcript_text = text
 
     def on_transcript_text(self, instance, value):
         self.message["transcript_text"] = value
         self._show_transcript_label()
-
-        print("Returned transcription:", value)
 
 
 class UserSentMessageChatBubble(BaseChatBubble):
