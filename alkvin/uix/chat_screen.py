@@ -15,6 +15,8 @@ from alkvin.data import (
 
 from alkvin.uix.components.chat_bubble import ChatBubbleBox
 
+from alkvin.audio import get_audio_bus
+
 
 class ChatScreen(MDScreen):
     chat_id = StringProperty()
@@ -23,41 +25,36 @@ class ChatScreen(MDScreen):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self._voice_recording_on = False
-
-        self.ids.audio_recorder.bind(recording=self.on_recording)
+        self._audio_bus = get_audio_bus()
+        self._audio_bus.set_on_save_recording_callback(self.on_save_recording)
 
     def on_pre_enter(self, *args):
         self.messages = load_messages(self.chat_id)
         self.ids.chat_scroll.scroll_y = 1
+
+    def on_pre_leave(self, *args):
+        self._audio_bus.stop()
 
     def on_messages(self, instance, messages):
         self.ids.chat_box.clear_widgets()
         for message in messages:
             self.ids.chat_box.add_widget(ChatBubbleBox(message))
 
-    def on_recording(self, instance, recording):
-        if not recording:
-            audio_file, audio_created_at = self._save_recording()
+    def on_save_recording(self, recording_path):
+        audio_file = os.path.basename(recording_path)
+        audio_created_at = os.path.getmtime(recording_path)
 
-            message = create_message(
-                self.chat_id,
-                role="user",
-                user_audio_file=audio_file,
-                user_audio_created_at=audio_created_at,
-            )
+        message = create_message(
+            self.chat_id,
+            role="user",
+            user_audio_file=audio_file,
+            user_audio_created_at=audio_created_at,
+        )
 
-            self.messages.append(message)
-            save_messages(self.chat_id, self.messages)
-
-    def _save_recording(self):
-        audio_path = get_audio_path(self.chat_id, get_new_audio_filename())
-        self.ids.audio_recorder.save(audio_path)
-
-        return os.path.basename(audio_path), os.path.getmtime(audio_path)
+        self.messages.append(message)
+        save_messages(self.chat_id, self.messages)
 
     def remove_message(self, index):
-        print("remove_message", index)
         del self.messages[index]
         save_messages(self.chat_id, self.messages)
 
@@ -89,7 +86,7 @@ Builder.load_string(
 
         AudioRecorderBox:
             id: audio_recorder
-            recording: False
+            chat_id: root.chat_id
 
     AnchorLayout:
         anchor_x: "right"
@@ -101,17 +98,5 @@ Builder.load_string(
             elevation_normal: 12
             on_release: None
             md_bg_color: [0.2, 0.6, 0.8, 1]
-
-    AnchorLayout:
-        anchor_x: "left"
-        anchor_y: "bottom"
-        padding: dp(48)        
-        MDFloatingActionButton:
-            icon: "microphone"
-            text_color: [0, 1, 0] if audio_recorder.recording else [1, 1, 1]
-            type: "large"
-            elevation_normal: 12
-            on_release: audio_recorder.recording = not audio_recorder.recording
-            md_bg_color: [1, .4, .2, 1]
 """
 )

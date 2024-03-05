@@ -3,53 +3,45 @@ from kivy.lang import Builder
 from kivy.properties import StringProperty
 
 from kivymd.uix.boxlayout import MDBoxLayout
-from kivymd.uix.progressbar import MDProgressBar
 
-from alkvin.audio import get_audio_player
+from alkvin.audio import get_audio_bus
 
 
 class AudioPlayerBox(MDBoxLayout):
+    state = StringProperty("stop")
     audio_path = StringProperty()
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self._controls_timer = None
-        self._player = get_audio_player()
+        self._audio_bus = get_audio_bus()
 
-    def start_playing(self):
-        self.ids.playing_progress.value = 0.1
-
-        self._player.play(self, self.audio_path)
-
-        self._controls_timer = Clock.schedule_interval(self._update_controls, 0.1)
-
-    def _update_controls(self, dt):
-        if not self._player.is_streaming_widget(self) or self._player.progress == 1.0:
+    def on_state(self, instance, state):
+        if state == "stop":
             if self._controls_timer is not None:
                 self._controls_timer.cancel()
                 self._controls_timer = None
 
-            Clock.schedule_once(self._reset_controls, 0.1)
+                self.ids.playing_progress.value = 0.1
 
-        self.ids.playing_progress.value = self._player.progress * 100
+        elif state == "play":
+            self._controls_timer = Clock.schedule_interval(self._update_controls, 0.1)
 
-    def _reset_controls(self, dt):
-        self.ids.playing_progress.value = 0.1
+    def _update_controls(self, dt):
+        self.ids.playing_progress.value = (
+            self._audio_bus.passed_time / self._audio_bus.total_time * 100
+        )
 
+    def toggle_playing(self):
+        if self.state == "stop":
+            self._audio_bus.play(self, self.audio_path)
 
-class PlayingProgressBar(MDProgressBar):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self.min = 0.1
-        self.max = 100
-        self.value = 0.1
+        elif self.state == "play":
+            self._audio_bus.stop(self)
 
 
 Builder.load_string(
     """
-# <PlayingProgressBar>:
-
-
 <AudioPlayerBox>:
     progress_bar_color: .4, .4, .4, .8
     orientation: "horizontal"
@@ -64,15 +56,18 @@ Builder.load_string(
             radius: [24, 24, 24, 24]
     
     MDIconButton:
-        icon: "play"
+        icon: "play" if root.state == "stop" else "stop"
         theme_text_color: "Custom"
         text_color: [.4, .4, .4]
-        on_release: root.start_playing()
+        on_release: root.toggle_playing()
     
     MDBoxLayout:
         padding: dp(10), dp(20), dp(30), dp(20)
-        PlayingProgressBar:
+        MDProgressBar:
             id: playing_progress
+            min: 0.1
+            max: 100
+            value: 0.1
             color: root.progress_bar_color
             
 """
