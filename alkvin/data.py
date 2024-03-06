@@ -116,10 +116,22 @@ def create_message(chat_id, **message_data):
 
 
 def load_messages(chat_id):
+
+    def sent_key(message):
+        if message["role"] == "user" and not message["message_sent_at"]:
+            return (1, message["message_sent_at"])
+
+        return (0, message["message_sent_at"] or message["completion_received_at"])
+
     with open(os.path.join(CHATS_PATH, chat_id, "messages.json")) as f:
         messages_data = json.load(f)
 
-    return list(map(lambda d: create_message(chat_id, **d), messages_data))
+    messages_with_chat_id = list(
+        map(lambda d: create_message(chat_id, **d), messages_data)
+    )
+    messages_with_chat_id.sort(key=sent_key)
+
+    return messages_with_chat_id
 
 
 def save_messages(chat_id, messages):

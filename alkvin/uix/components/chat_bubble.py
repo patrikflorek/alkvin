@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from kivy.lang import Builder
 from kivy.properties import StringProperty
 
@@ -29,8 +31,26 @@ class ChatBubbleBox(MDBoxLayout):
 
         self.add_widget(self.bubble)
 
-    def close(self):
+    def remove_message(self):
         self.parent.remove_message(self)
+
+    def send_message(self):
+        self.remove_widget(self.bubble)
+
+        self.bubble = UserSentMessageChatBubble(self.bubble.message)
+        self.add_widget(self.bubble)
+
+        if self.bubble.message["transcript_received_at"]:
+            self.parent.save_messages()
+
+        self.parent.reload_messages()
+
+    def on_transcription_callback(self, text):
+        self.bubble.transcript_text = text
+
+    def update_message(self):
+        if self.parent is not None:
+            self.parent.save_messages()
 
 
 class BaseChatBubble(MDCard):
@@ -49,7 +69,6 @@ class UserPreparedMessageChatBubble(BaseChatBubble):
         self.message = message
         self.user_audio_file = message["user_audio_file"]
         self.user_audio_path = get_audio_path(self.chat_id, self.user_audio_file)
-
         self.user_audio_created_at = message["user_audio_created_at"]
         self.transcript_text = message.get("transcript_text", "")
         self.transcript_received_at = message.get("transcript_received_at", "")
@@ -84,14 +103,33 @@ class UserPreparedMessageChatBubble(BaseChatBubble):
         self.transcript_text = text
 
     def on_transcript_text(self, instance, value):
+        print("UserPreparedMessageChatBubble.on_transcript_text", value)
         self.message["transcript_text"] = value
+        self.message["transcript_received_at"] = datetime.now().isoformat()
+
         self._show_transcript_label()
+
+        if self.parent is not None:
+            self.parent.update_message()
 
     def close(self):
         if self.ids.user_audio_player.state == "play":
             self.ids.user_audio_player.stop()
 
-        self.parent.remove_message(self)
+        self.parent.remove_message()
+
+    def send(self):
+        if self.ids.user_audio_player.state == "play":
+            self.ids.user_audio_player.stop()
+
+        if not self.message["transcript_received_at"]:
+            transcribe_audio(
+                self.user_audio_path, self.parent.on_transcription_callback
+            )
+
+        self.message["message_sent_at"] = datetime.now().isoformat()
+
+        self.parent.send_message()
 
 
 class UserSentMessageChatBubble(BaseChatBubble):
@@ -100,12 +138,21 @@ class UserSentMessageChatBubble(BaseChatBubble):
 
     def __init__(self, message, **kwargs):
         super().__init__(message, **kwargs)
+        self.message = message
         self.user_audio_file = message["user_audio_file"]
         self.user_audio_path = get_audio_path(self.chat_id, self.user_audio_file)
-
+        self.user_audio_created_at = message["user_audio_created_at"]
         self.transcript_text = message["transcript_text"]
         self.transcript_received_at = message["transcript_received_at"]
         self.message_sent_at = message["message_sent_at"]
+
+    def on_transcript_text(self, instance, value):
+        print("UserSentMessageChatBubble.on_transcript_text", value)
+        self.message["transcript_text"] = value
+        self.message["transcript_received_at"] = datetime.now().isoformat()
+
+        if self.parent is not None:
+            self.parent.update_message()
 
 
 class AssistantReceivedMessageChatBubble(BaseChatBubble):
@@ -203,7 +250,7 @@ Builder.load_string(
                 icon_size: "18dp"
                 theme_text_color: "Custom"
                 text_color: [.4, .4, .4]
-                on_release: root.parent.close()
+                on_release: root.close()
 
         AnchorLayout:
             anchor_x: "right"
@@ -213,27 +260,31 @@ Builder.load_string(
                 icon_size: "24dp"
                 theme_text_color: "Custom"
                 text_color: [.4, .4, .4]
-                on_release: print("Send")  
+                on_release: root.send()  
 
 
 <UserSentMessageChatBubble>:
-    orientation: "vertical"
     md_bg_color: [1, .4, .2, .6]
     radius: [25, 25, 25, 0]
-    spacing: "24dp"
 
-    AudioPlayerBox:
-        id: user_audio_player
-        audio_path: root.user_audio_path
-        progress_bar_color: [1, .4, .2, .8]
-
-    MDLabel:
-        id: transcript_label
-        text: root.transcript_text
-        theme_text_color: "Custom"
-        text_color: [.4, .4, .4]
-        font_style: "Body2"
+    MDBoxLayout:
+        id: content_box
+        orientation: "vertical"
         adaptive_height: True
+        spacing: "24dp"
+
+        AudioPlayerBox:
+            id: user_audio_player
+            audio_path: root.user_audio_path
+            progress_bar_color: [1, .4, .2, .8]
+
+        MDLabel:
+            id: transcript_label
+            text: root.transcript_text
+            theme_text_color: "Custom"
+            text_color: [.4, .4, .4]
+            font_style: "Body2"
+            adaptive_height: True
 
 
 <AssistantReceivedMessageChatBubble>:

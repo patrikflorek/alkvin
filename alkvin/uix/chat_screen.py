@@ -74,10 +74,26 @@ class ChatScreen(MDScreen):
         del self.messages[index]
         save_messages(self.chat_id, self.messages)
 
-    def _remove_message_files(message):
+    def change_message_index(self, message, index):
+        current_index = self.messages.index(message)
+        if current_index == index:
+            return
+
+        self.messages.remove(message)
+        self.messages.insert(index, message)
+
+        save_messages(self.chat_id, self.messages)
+
+    def _delete_message_files(self, message):
         if message["role"] == "user":
             audio_path = get_audio_path(message["chat_id"], message["user_audio_file"])
             os.remove(audio_path)
+
+    def save_messages(self):
+        save_messages(self.chat_id, self.messages)
+
+    def reload_messages(self):
+        self.messages = load_messages(self.chat_id)
 
 
 Builder.load_string(
@@ -99,7 +115,11 @@ Builder.load_string(
             id: chat_scroll
             MDBoxLayout:
                 id: chat_box
+                
                 remove_message: lambda bubble_box: root.remove_message(self.children[::-1].index(bubble_box))
+                save_messages: lambda: root.save_messages()
+                reload_messages: root.reload_messages
+
                 orientation: "vertical"
                 adaptive_height: True
                 padding: dp(40), dp(100), dp(40), dp(80)
