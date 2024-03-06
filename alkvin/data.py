@@ -4,9 +4,26 @@ import random
 import string
 
 
+# Models
+DEFAULT_TRANSCRIPTION_MODEL = "openai/whisper-1"
+DEFAULT_COMPLETION_MODEL = "openai/gpt-3.5-turbo"
+DEFAULT_SPEECH_MODEL = "openai/tts-1"
+
 # Chats
 
 CHATS_PATH = os.path.abspath("data/chats/")
+
+DEFAULT_CHAT_TITLE = "New Chat"
+DEFAULT_CHAT_SUMMARY = "This is a new chat."
+
+DEFAULT_INSTRUCTIONS = """
+You are a language tutor. You communicate with your student using audio messages. You start by generating
+a text which is then converted to speech using text-to-speech deep neural model. Your student then listents to the speech and records a respose.
+The response is then transcribed to text by speech-to-text deep neural model. The resulting text is then served back to you. You continue by generating another
+response and the whole process repeats until student stops to respond. Every time you receive a response from the student, you are charged a fee. The transcript you receive
+from the student may contain many errors and you should take that into account when generating a response.
+You should first try to guess what the intended message was and then generate a response.
+"""
 
 
 def load_chat_ids():
@@ -28,8 +45,30 @@ def create_chat(chat_id):
     """Create a new chat with the given name. Raises an error if the chat already exists."""
 
     os.makedirs(os.path.join(CHATS_PATH, chat_id))
+
+    with open(os.path.join(CHATS_PATH, chat_id, "chat.json"), "w") as f:
+        json.dump(
+            {
+                "chat_id": chat_id,
+                "title": DEFAULT_CHAT_TITLE,
+                "summary": DEFAULT_CHAT_SUMMARY,
+                "transcription_model": DEFAULT_TRANSCRIPTION_MODEL,
+                "completion_model": DEFAULT_COMPLETION_MODEL,
+                "speech_model": DEFAULT_SPEECH_MODEL,
+                "instructions": DEFAULT_INSTRUCTIONS,
+            },
+            f,
+        )
+
     with open(os.path.join(CHATS_PATH, chat_id, "messages.json"), "w") as f:
         json.dump([], f)
+
+
+def load_chat(chat_id):
+    with open(os.path.join(CHATS_PATH, chat_id, "chat.json")) as f:
+        chat_data = json.load(f)
+
+    return chat_data
 
 
 # Messages
@@ -55,9 +94,6 @@ def create_message(chat_id, **message_data):
 
 
 def load_messages(chat_id):
-    if not chat_id:
-        return []
-
     with open(os.path.join(CHATS_PATH, chat_id, "messages.json")) as f:
         messages_data = json.load(f)
 

@@ -1,13 +1,12 @@
 import os
 from kivy.lang import Builder
-from kivy.properties import ListProperty, StringProperty
+from kivy.properties import DictProperty, ListProperty, StringProperty
 
 from kivymd.uix.screen import MDScreen
 
 
 from alkvin.data import (
-    get_new_audio_filename,
-    get_audio_path,
+    load_chat,
     load_messages,
     create_message,
     save_messages,
@@ -21,6 +20,8 @@ from alkvin.audio import get_audio_bus
 class ChatScreen(MDScreen):
     chat_id = StringProperty()
 
+    chat = DictProperty({"title": ""})
+
     messages = ListProperty()
 
     def __init__(self, **kwargs):
@@ -29,6 +30,7 @@ class ChatScreen(MDScreen):
         self._audio_bus.set_on_save_recording_callback(self.on_save_recording)
 
     def on_pre_enter(self, *args):
+        self.chat = load_chat(self.chat_id)
         self.messages = load_messages(self.chat_id)
         self.ids.chat_scroll.scroll_y = 1
 
@@ -66,11 +68,11 @@ Builder.load_string(
 
 <ChatScreen>:
     name: "chat"
-
+    
     MDBoxLayout:
         orientation: "vertical"
         MDTopAppBar:
-            title: root.chat_id
+            title: root.chat['title']
             left_action_items: [["arrow-left", lambda x: app.root.goto_previous_screen()]]
             right_action_items: [["dots-vertical", lambda x: None]]
         
