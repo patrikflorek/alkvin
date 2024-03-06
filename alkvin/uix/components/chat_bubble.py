@@ -41,12 +41,16 @@ class ChatBubbleBox(MDBoxLayout):
         self.add_widget(self.bubble)
 
         if self.bubble.message["transcript_received_at"]:
+            self.parent.create_completion_message()
+
             self.parent.save_messages()
 
         self.parent.reload_messages()
 
     def on_transcription_callback(self, text):
         self.bubble.transcript_text = text
+
+        self.parent.create_completion_message()
 
     def update_message(self):
         if self.parent is not None:

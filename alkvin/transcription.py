@@ -4,15 +4,13 @@ import multitasking
 
 from kivy.clock import Clock
 
-import openai
 from openai import OpenAI
 
-openai.api_key = os.getenv("OPENAI_API_KEY")
 
-open_ai_client = OpenAI()
+open_ai_client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 
-LANGUAGE = "sk"
+LANGUAGE = "en"
 
 
 @multitasking.task

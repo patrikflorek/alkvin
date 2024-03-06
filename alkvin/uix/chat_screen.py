@@ -20,6 +20,8 @@ from alkvin.audio import get_audio_bus
 
 from alkvin.data import get_audio_path
 
+from alkvin.completion import generate_completion
+
 
 class ChatScreen(MDScreen):
     chat_id = StringProperty()
@@ -95,6 +97,23 @@ class ChatScreen(MDScreen):
     def reload_messages(self):
         self.messages = load_messages(self.chat_id)
 
+    def create_completion_message(self):
+        generate_completion(
+            self.chat["instructions"], self.messages, self._on_completion_create_message
+        )
+
+    def _on_completion_create_message(self, completion_text):
+        self.messages.append(
+            create_message(
+                self.chat_id,
+                role="assistant",
+                completion_text=completion_text,
+                completion_received_at=datetime.now().isoformat(),
+            )
+        )
+        save_messages(self.chat_id, self.messages)
+        self.reload_messages()
+
 
 Builder.load_string(
     """
@@ -118,7 +137,8 @@ Builder.load_string(
                 
                 remove_message: lambda bubble_box: root.remove_message(self.children[::-1].index(bubble_box))
                 save_messages: lambda: root.save_messages()
-                reload_messages: root.reload_messages
+                reload_messages: lambda: root.reload_messages()
+                create_completion_message: lambda: root.create_completion_message()
 
                 orientation: "vertical"
                 adaptive_height: True
