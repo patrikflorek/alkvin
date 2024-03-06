@@ -34,9 +34,13 @@ class ChatScreen(MDScreen):
         self._audio_bus.set_on_save_recording_callback(self.on_save_recording)
 
     def on_pre_enter(self, *args):
+        prev_chat_id = self.chat.get("chat_id")
+
         self.chat = load_chat(self.chat_id)
         self.messages = load_messages(self.chat_id)
-        self.ids.chat_scroll.scroll_y = 1
+
+        if self.chat_id != prev_chat_id:
+            self.ids.chat_scroll.scroll_y = 1
 
     def on_pre_leave(self, *args):
         self._audio_bus.stop()
