@@ -53,7 +53,6 @@ class UserPreparedMessageChatBubble(BaseChatBubble):
         self.user_audio_created_at = message["user_audio_created_at"]
         self.transcript_text = message.get("transcript_text", "")
         self.transcript_received_at = message.get("transcript_received_at", "")
-        self.transcript_price = message.get("transcript_price", "")
 
         if self.transcript_text:
             self._show_transcript_label()
@@ -88,6 +87,12 @@ class UserPreparedMessageChatBubble(BaseChatBubble):
         self.message["transcript_text"] = value
         self._show_transcript_label()
 
+    def close(self):
+        if self.ids.user_audio_player.state == "play":
+            self.ids.user_audio_player.stop()
+
+        self.parent.remove_message(self)
+
 
 class UserSentMessageChatBubble(BaseChatBubble):
     transcript_text = StringProperty()
@@ -100,7 +105,6 @@ class UserSentMessageChatBubble(BaseChatBubble):
 
         self.transcript_text = message["transcript_text"]
         self.transcript_received_at = message["transcript_received_at"]
-        self.transcript_price = message["transcript_price"]
         self.message_sent_at = message["message_sent_at"]
 
 
@@ -112,13 +116,11 @@ class AssistantReceivedMessageChatBubble(BaseChatBubble):
         super().__init__(message, **kwargs)
         self.completion_text = message["completion_text"]
         self.completion_received_at = message["completion_received_at"]
-        self.completion_price = message["completion_price"]
 
         self.tts_audio_file = message.get("tts_audio_file", "")
         self.tts_audio_path = get_audio_path(self.chat_id, self.tts_audio_file)
 
         self.tts_audio_received_at = message.get("tts_audio_received_at", "")
-        self.tts_audio_price = message.get("tts_audio_price", "")
 
         if self.tts_audio_file:
             self.ids.synthesize_button_box.disabled = True

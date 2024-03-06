@@ -3,6 +3,8 @@ import json
 import random
 import string
 
+from datetime import datetime
+
 
 # Models
 DEFAULT_TRANSCRIPTION_MODEL = "openai/whisper-1"
@@ -26,13 +28,26 @@ You should first try to guess what the intended message was and then generate a 
 """
 
 
-def load_chat_ids():
-    chat_ids = [
-        {"chat_id": d}
-        for d in os.listdir(CHATS_PATH)
-        if os.path.isdir(os.path.join(CHATS_PATH, d))
+def load_chat_list_items():
+    """Return a list of chat items with the chat id, title, summary, creation time etc."""
+
+    chat_list_items = []
+
+    chat_dirs = [
+        file
+        for file in os.listdir(CHATS_PATH)
+        if os.path.isdir(os.path.join(CHATS_PATH, file))
     ]
-    return chat_ids
+    for chat_dir in chat_dirs:
+        chat_json_path = os.path.join(CHATS_PATH, chat_dir, "chat.json")
+        with open(chat_json_path) as f:
+            chat_data = json.load(f)
+
+        chat_list_items.append(chat_data)
+
+    chat_list_items.sort(key=lambda d: d["chat_created_at"], reverse=True)
+
+    return chat_list_items
 
 
 def get_new_chat_id():
@@ -46,12 +61,19 @@ def create_chat(chat_id):
 
     os.makedirs(os.path.join(CHATS_PATH, chat_id))
 
+    # Creation time of the directory is creation time of the chat
+
+    created_at_timestamp = os.path.getctime(os.path.join(CHATS_PATH, chat_id))
+    created_at = datetime.fromtimestamp(created_at_timestamp).isoformat()
+
     with open(os.path.join(CHATS_PATH, chat_id, "chat.json"), "w") as f:
         json.dump(
             {
                 "chat_id": chat_id,
-                "title": DEFAULT_CHAT_TITLE,
-                "summary": DEFAULT_CHAT_SUMMARY,
+                "chat_title": DEFAULT_CHAT_TITLE,
+                "chat_summary": DEFAULT_CHAT_SUMMARY,
+                "chat_created_at": created_at,
+                "chat_modified_at": created_at,
                 "transcription_model": DEFAULT_TRANSCRIPTION_MODEL,
                 "completion_model": DEFAULT_COMPLETION_MODEL,
                 "speech_model": DEFAULT_SPEECH_MODEL,

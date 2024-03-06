@@ -1,25 +1,27 @@
 from kivy.lang import Builder
 from kivy.properties import ListProperty, StringProperty
 
-from kivymd.uix.list import OneLineListItem
+from kivymd.uix.list import TwoLineListItem
 from kivymd.uix.screen import MDScreen
 
 
-from alkvin.data import load_chat_ids
+from alkvin.data import load_chat_list_items
 
 
 class HomeScreen(MDScreen):
-    chat_ids = ListProperty()
+    chat_list_items = ListProperty()
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
     def on_pre_enter(self, *args):
-        self.chat_ids = load_chat_ids()
+        self.chat_list_items = load_chat_list_items()
 
 
-class ChatListItem(OneLineListItem):
+class ChatListItem(TwoLineListItem):
     chat_id = StringProperty()
+    chat_title = StringProperty()
+    chat_summary = StringProperty()
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -37,7 +39,7 @@ Builder.load_string(
             right_action_items: [["cog", lambda x: app.root.goto_screen("settings")]]
         
         RecycleView:
-            data: root.chat_ids
+            data: root.chat_list_items
             viewclass: "ChatListItem"
 
             RecycleBoxLayout:
@@ -60,7 +62,8 @@ Builder.load_string(
 
 <ChatListItem>:
     chat_id: ""
-    text: self.chat_id
+    text: self.chat_title
+    secondary_text: self.chat_summary
     on_release: app.root.goto_screen("chat", chat_id=self.chat_id)
 """
 )

@@ -77,7 +77,8 @@ class AudioBus:
         self._state = "recording"
 
     def stop(self, audio_device_widget=None):
-        self._active_audio_widget.state = "stop"
+        if self._active_audio_widget is not None:
+            self._active_audio_widget.state = "stop"
 
         if self._state == "playing":
             self._audio_player.stop()

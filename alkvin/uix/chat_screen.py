@@ -1,4 +1,6 @@
 import os
+from datetime import datetime
+
 from kivy.lang import Builder
 from kivy.properties import DictProperty, ListProperty, StringProperty
 
@@ -16,11 +18,13 @@ from alkvin.uix.components.chat_bubble import ChatBubbleBox
 
 from alkvin.audio import get_audio_bus
 
+from alkvin.data import get_audio_path
+
 
 class ChatScreen(MDScreen):
     chat_id = StringProperty()
 
-    chat = DictProperty({"title": ""})
+    chat = DictProperty({"chat_title": ""})
 
     messages = ListProperty()
 
@@ -44,7 +48,11 @@ class ChatScreen(MDScreen):
 
     def on_save_recording(self, recording_path):
         audio_file = os.path.basename(recording_path)
-        audio_created_at = os.path.getmtime(recording_path)
+
+        audio_created_at_timestamp = os.path.getmtime(recording_path)
+        audio_created_at = datetime.fromtimestamp(
+            audio_created_at_timestamp
+        ).isoformat()
 
         message = create_message(
             self.chat_id,
@@ -57,8 +65,15 @@ class ChatScreen(MDScreen):
         save_messages(self.chat_id, self.messages)
 
     def remove_message(self, index):
+        self._delete_message_files(self.messages[index])
+
         del self.messages[index]
         save_messages(self.chat_id, self.messages)
+
+    def _remove_message_files(message):
+        if message["role"] == "user":
+            audio_path = get_audio_path(message["chat_id"], message["user_audio_file"])
+            os.remove(audio_path)
 
 
 Builder.load_string(
@@ -72,7 +87,7 @@ Builder.load_string(
     MDBoxLayout:
         orientation: "vertical"
         MDTopAppBar:
-            title: root.chat['title']
+            title: root.chat['chat_title']
             left_action_items: [["arrow-left", lambda x: app.root.goto_previous_screen()]]
             right_action_items: [["dots-vertical", lambda x: None]]
         
