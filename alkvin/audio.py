@@ -84,7 +84,7 @@ class AudioBus:
 
         if self._state == "playing":
             self._audio_player.stop()
-            # audio_device_widget.state = "stop"
+
         if self._state == "recording":
             saved_recording_path = self._audio_recorder.stop()
             if self._on_save_recording_callback is not None and saved_recording_path:
@@ -232,7 +232,6 @@ class AudioPlayer:
         chunk_size = frame_count * self._sample_width * self._num_channels
 
         if self._warm_up_counter < self.WARM_UP_ROUNDS:
-            print("AudioPlayer._stream_callback", self._warm_up_counter)
             self._warm_up_counter += 1
             return (b"\x00" * chunk_size, pyaudio.paContinue)
 
@@ -261,7 +260,6 @@ class AudioPlayer:
         self._head_pos = 0
 
     def stop(self):
-        print("AudioPlayer.stop")
         if self._stream is not None:
             self._stream.close()
 

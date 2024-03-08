@@ -21,9 +21,8 @@ def generate_completion(instructions, messages, callback):
         if (message["message_sent_at"] or message["completion_received_at"])
     ]
     context = [{"role": "system", "content": instructions}, *completion_messages]
-    print("Completion context", context)
     completion = open_ai_client.chat.completions.create(
         messages=context, model="gpt-3.5-turbo"
     )
-    print("Completion", completion.choices[0].message.content)
+
     Clock.schedule_once(lambda dt: callback(completion.choices[0].message.content))

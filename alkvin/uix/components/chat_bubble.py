@@ -152,7 +152,6 @@ class UserSentMessageChatBubble(BaseChatBubble):
         self.message_sent_at = message["message_sent_at"]
 
     def on_transcript_text(self, instance, value):
-        print("UserSentMessageChatBubble.on_transcript_text", value)
         self.message["transcript_text"] = value
         self.message["transcript_received_at"] = datetime.now().isoformat()
 

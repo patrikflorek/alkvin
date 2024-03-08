@@ -17,7 +17,6 @@ class AudioPlayerBox(MDBoxLayout):
         self._audio_bus = get_audio_bus()
 
     def on_state(self, instance, state):
-        print("AudioPlayerBox.on_state", state)
         if state == "stop":
             if self._controls_timer is not None:
                 self._controls_timer.cancel()
@@ -29,12 +28,6 @@ class AudioPlayerBox(MDBoxLayout):
             self._controls_timer = Clock.schedule_interval(self._update_controls, 0.1)
 
     def _update_controls(self, dt):
-        # print(
-        #     "AudioPlayerBox._update_controls",
-        #     dt,
-        #     self._audio_bus.passed_time,
-        #     self._audio_bus.total_time,
-        # )
         self.ids.playing_progress.value = (
             (self._audio_bus.passed_time / self._audio_bus.total_time * 100)
             if self._audio_bus.total_time
