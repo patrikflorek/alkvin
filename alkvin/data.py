@@ -2,6 +2,7 @@ import os
 import json
 import random
 import string
+import shutil
 
 from datetime import datetime
 
@@ -12,13 +13,6 @@ DEFAULT_TRANSCRIPTION_MODEL = "openai/whisper-1"
 DEFAULT_COMPLETION_MODEL = "openai/gpt-3.5-turbo"
 DEFAULT_SPEECH_MODEL = "openai/tts-1"
 
-# Chats
-
-CHATS_PATH = os.path.abspath("data/chats/")
-
-DEFAULT_CHAT_TITLE = "New Chat"
-DEFAULT_CHAT_SUMMARY = "This is a new chat."
-
 DEFAULT_INSTRUCTIONS_EN = """
 You are an AI language tutor. Your task is to help the user improve their English. 
 The user will send you messages, which are transcriptions of their spoken words. 
@@ -26,12 +20,13 @@ These transcriptions might contain errors or be hard to understand due to the
 limitations of speech-to-text technology. 
 
 Your job is to understand the user's intended message, correct any grammatical 
-errors, and provide a clear and understandable response. 
+errors, and provide a clear and understandable response.
+
 Start your response by rephrasing the user's message in correct English.
 Then, answer any questions or respond to any statements the user made.
 
-Occasionally, I, the system, will 
-provide you with instructions to modify your responses. 
+Occasionally, I, the system, will provide you with instructions to modify your 
+responses. 
 
 Remember, you must only respond in English.
 
@@ -40,6 +35,8 @@ Keep your responses concise and focused on correcting the user's language and
 answering their questions.
 
 Please follow these instructions carefully.
+
+Start by greeting the user and offering them to start a conversation in one or two sentences.
 """
 
 DEFAULT_INSTRUCTIONS_SK = """
@@ -63,10 +60,19 @@ zameriavaj sa na opravu aglickej gramatiky v používateľovej správe a čo naj
 odpovedanie na jeho otázky.
 
 Prosím, starostlivo dodržiavaj tieto pravidlá.
+
+Začni tým, že pozdravíš používateľa a v jednej alebo dvoch vetách mu dáš návrh na tému konverzácie.
 """
 
+DEFAULT_INSTRUCTIONS = DEFAULT_INSTRUCTIONS_EN
 
-DEFAULT_INSTRUCTIONS = DEFAULT_INSTRUCTIONS_SK
+
+# Chats
+
+CHATS_PATH = os.path.abspath("data/chats/")
+
+DEFAULT_CHAT_TITLE = "New Chat"
+DEFAULT_CHAT_SUMMARY = "This is a new chat."
 
 
 def load_chat_list_items():
@@ -132,6 +138,21 @@ def load_chat(chat_id):
         chat_data = json.load(f)
 
     return chat_data
+
+
+def save_chat(chat):
+    chat_id = chat["chat_id"]
+    chat_path = os.path.join(CHATS_PATH, chat_id, "chat.json")
+
+    with open(chat_path, "w") as f:
+        json.dump(chat, f)
+
+
+def delete_chat(chat_id):
+    """Delete the chat with given id."""
+
+    chat_path = os.path.join(CHATS_PATH, chat_id)
+    shutil.rmtree(chat_path)
 
 
 # Messages

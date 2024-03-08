@@ -54,7 +54,7 @@ Builder.load_string(
         anchor_y: "bottom"
         padding: dp(48)        
         MDFloatingActionButton:
-            icon: "chat"
+            icon: "message-plus"
             type: "large"
             elevation_normal: 12
             on_release: app.root.goto_screen("chat")

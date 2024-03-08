@@ -19,7 +19,7 @@ def transcribe_audio(audio_path, callback):
         transcription = open_ai_client.audio.transcriptions.create(
             model="whisper-1",
             file=af,
-            # language=LANGUAGE,
+            language=LANGUAGE,
             prompt="Nasleduje kombináciu anglického a slovenského hovoreného textu.",
             response_format="json",
         )
