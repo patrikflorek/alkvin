@@ -56,8 +56,10 @@ class AudioBus:
             self._active_audio_widget.state = "stop"
 
         self._active_audio_widget = audio_player_widget
+        if self._active_audio_widget is not None:
+            self._active_audio_widget.state = "play"
         self._audio_player.play(audio_path)
-        self._active_audio_widget.state = "play"
+
         self._state = "playing"
 
     def record(self, audio_recorder_widget, audio_path):
@@ -96,7 +98,9 @@ class AudioBus:
         self._active_audio_widget = None
 
     def on_audio_device_finish_callback(self):
-        self._active_audio_widget.state = "stop"
+        if self._active_audio_widget is not None:
+            self._active_audio_widget.state = "stop"
+
         self._active_audio_widget = None
         self._state = "idle"
 
@@ -159,74 +163,106 @@ class AudioRecorder:
 
 
 class AudioPlayer:
+    WARM_UP_ROUNDS = 200
+
     def __init__(self, on_finish_callback):
         self._on_finish_callback = on_finish_callback
 
         self._p = pyaudio.PyAudio()
         self._stream = None
-        self._wf = None
+        self._frames = []
+        self._head_pos = 0
+        self._sample_width = 0
+        self._num_channels = 0
+        self._rate = 0
+
+        self._warm_up_counter = 0  # To avoid audio glitches
 
     @property
     def playing_time(self):
-        if self._wf is None:
+        if (
+            not self._frames
+            or not self._rate
+            or not self._sample_width
+            or not self._num_channels
+        ):
             return 0
 
-        return self._wf.tell() / self._wf.getframerate()
+        return (self._head_pos / (self._sample_width * self._num_channels)) / self._rate
 
     @property
     def total_time(self):
-        if self._wf is None:
+        if (
+            not self._frames
+            or not self._rate
+            or not self._sample_width
+            or not self._num_channels
+        ):
             return 0
 
-        return self._wf.getnframes() / self._wf.getframerate()
+        return (
+            len(self._frames) / (self._sample_width * self._num_channels)
+        ) / self._rate
 
-    def play(
-        self,
-        audio_path,
-    ):
+    def play(self, audio_path):
         if not audio_path:
             return
 
-        if self._wf is not None:
-            self._wf.close()
+        with wave.open(audio_path, "rb") as wf:
+            self._frames = wf.readframes(wf.getnframes())
 
-        self._wf = wave.open(audio_path, "rb")
+            self._rate = wf.getframerate()
+            self._format = self._p.get_format_from_width(wf.getsampwidth())
+            self._sample_width = wf.getsampwidth()
+            self._num_channels = wf.getnchannels()
 
-        if self._stream is not None:
-            self._stream.close()
+        self._head_pos = 0
+
+        self._warm_up_counter = 0
 
         self._stream = self._p.open(
-            format=self._p.get_format_from_width(self._wf.getsampwidth()),
-            channels=self._wf.getnchannels(),
-            rate=self._wf.getframerate(),
+            format=self._format,
+            channels=self._num_channels,
+            rate=self._rate,
             output=True,
             stream_callback=self._stream_callback,
         )
 
     def _stream_callback(self, in_data, frame_count, time_info, status):
-        if self._wf is None:
-            return b"", pyaudio.paComplete
+        chunk_size = frame_count * self._sample_width * self._num_channels
 
-        try:
-            data = self._wf.readframes(frame_count)
-        except ValueError:
-            print("ValueError", self, self._wf, frame_count)
-            self.stop()
+        if self._warm_up_counter < self.WARM_UP_ROUNDS:
+            print("AudioPlayer._stream_callback", self._warm_up_counter)
+            self._warm_up_counter += 1
+            return (b"\x00" * chunk_size, pyaudio.paContinue)
+
+        data = self._frames[self._head_pos : self._head_pos + chunk_size]
+        self._head_pos += chunk_size
+
+        frame_size = self._sample_width * self._num_channels
+
+        processed_frame_count = int(0 if frame_size == 0 else len(data) / frame_size)
+
+        if processed_frame_count < frame_count:
             self._on_finish_callback()
-
-            return b"", pyaudio.paComplete
-
-        if len(data) < frame_count * self._wf.getsampwidth() * self._wf.getnchannels():
             self.stop()
-            self._on_finish_callback()
 
-            return data, pyaudio.paComplete
+            return (data if data else b""), pyaudio.paComplete
 
         return data, pyaudio.paContinue
 
-    def stop(self):
-        if self._wf is not None:
-            self._wf.close()
+    def _reset_params(self):
+        self._frames = []
+        self._num_total_frames = 0
+        self._rate = 0
+        self._format = 0
+        self._sample_width = 0
+        self._num_channels = 0
+        self._head_pos = 0
 
+    def stop(self):
+        print("AudioPlayer.stop")
         if self._stream is not None:
             self._stream.close()
+
+        self._reset_params()

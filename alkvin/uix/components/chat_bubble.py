@@ -1,3 +1,4 @@
+import os
 from datetime import datetime
 
 from kivy.lang import Builder
@@ -6,9 +7,10 @@ from kivy.properties import StringProperty
 from kivymd.uix.boxlayout import MDBoxLayout
 from kivymd.uix.card import MDCard
 
-from alkvin.data import get_audio_path
+from alkvin.data import get_new_audio_filename, get_audio_path
 
 from alkvin.transcription import transcribe_audio
+from alkvin.speech import generate_speech
 
 
 class ChatBubbleBox(MDBoxLayout):
@@ -107,7 +109,6 @@ class UserPreparedMessageChatBubble(BaseChatBubble):
         self.transcript_text = text
 
     def on_transcript_text(self, instance, value):
-        print("UserPreparedMessageChatBubble.on_transcript_text", value)
         self.message["transcript_text"] = value
         self.message["transcript_received_at"] = datetime.now().isoformat()
 
@@ -161,26 +162,60 @@ class UserSentMessageChatBubble(BaseChatBubble):
 
 class AssistantReceivedMessageChatBubble(BaseChatBubble):
     completion_text = StringProperty()
-    tts_audio_path = StringProperty()
+    speech_audio_path = StringProperty()
 
     def __init__(self, message, **kwargs):
         super().__init__(message, **kwargs)
+        self.message = message
         self.completion_text = message["completion_text"]
         self.completion_received_at = message["completion_received_at"]
 
-        self.tts_audio_file = message.get("tts_audio_file", "")
-        self.tts_audio_path = get_audio_path(self.chat_id, self.tts_audio_file)
+        self.speech_audio_file = message.get("speech_audio_file", "")
+        self.speech_audio_path = get_audio_path(self.chat_id, self.speech_audio_file)
 
-        self.tts_audio_received_at = message.get("tts_audio_received_at", "")
+        self.speech_audio_received_at = message.get("speech_audio_received_at", "")
 
-        if self.tts_audio_file:
-            self.ids.synthesize_button_box.disabled = True
-            self.ids.synthesize_button_box.height = 0
-            self.ids.synthesize_button.opacity = 0
+        if self.speech_audio_file:
+            self._show_speech_audio_player()
         else:
-            self.ids.tts_audio_player.disabled = True
-            self.ids.tts_audio_player.height = 0
-            self.ids.tts_audio_player.opacity = 0
+            self._show_synthesize_button()
+
+    def _show_speech_audio_player(self):
+        self.ids.synthesize_button_box.disabled = True
+        self.ids.synthesize_button_box.height = 0
+        self.ids.synthesize_button.opacity = 0
+
+        self.ids.speech_audio_player.disabled = False
+        self.ids.speech_audio_player.height = "48dp"
+        self.ids.speech_audio_player.opacity = 1
+
+    def _show_synthesize_button(self):
+        self.ids.speech_audio_player.disabled = True
+        self.ids.speech_audio_player.height = 0
+        self.ids.speech_audio_player.opacity = 0
+
+        self.ids.synthesize_button_box.disabled = False
+        self.ids.synthesize_button_box.height = "48dp"
+        self.ids.synthesize_button.opacity = 1
+
+    def generate_speech(self):
+        generate_speech(self.completion_text, self._on_speech_audio_callback)
+
+    def _on_speech_audio_callback(self, speech_audio):
+        speech_audio_file = get_new_audio_filename()
+        speech_audio_path = get_audio_path(self.chat_id, speech_audio_file)
+        speech_audio.stream_to_file(speech_audio_path)
+
+        self.speech_audio_path = speech_audio_path
+
+    def on_speech_audio_path(self, instance, audio_path):
+        self.message["speech_audio_file"] = os.path.basename(audio_path)
+        self.message["speech_audio_received_at"] = datetime.now().isoformat()
+
+        self._show_speech_audio_player()
+
+        if self.parent is not None:
+            self.parent.update_message()
 
 
 Builder.load_string(
@@ -304,7 +339,6 @@ Builder.load_string(
         font_style: "Body1"
         adaptive_height: True
 
-
     MDBoxLayout:
         id: speech_synthesize_box
         orientation: "vertical"
@@ -320,11 +354,11 @@ Builder.load_string(
                 icon: "account-voice"
                 theme_text_color: "Custom"
                 text_color: [.4, .4, .4]
-                on_release: print("Synthesize speech")
+                on_release: root.generate_speech()
 
         AudioPlayerBox:
-            id: tts_audio_player
-            audio_path: root.tts_audio_path
+            id: speech_audio_player
+            audio_path: root.speech_audio_path
             progress_bar_color: [.2, .6, .8, .8]        
 """
 )

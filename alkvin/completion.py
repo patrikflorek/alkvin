@@ -15,7 +15,7 @@ def generate_completion(instructions, messages, callback):
     completion_messages = [
         {
             "role": message["role"],
-            "content": (message["transcript_text"] or ["completion_text"]),
+            "content": (message["transcript_text"] or message["completion_text"]),
         }
         for message in messages
         if (message["message_sent_at"] or message["completion_received_at"])

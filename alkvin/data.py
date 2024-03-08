@@ -109,9 +109,9 @@ def create_message(chat_id, **message_data):
         "completion_text": message_data.get("completion_text", ""),
         "completion_received_at": message_data.get("completion_received_at", ""),
         "completion_price": message_data.get("completion_price", ""),
-        "tts_audio_file": message_data.get("tts_audio_file", ""),
-        "tts_audio_received_at": message_data.get("tts_audio_received_at", ""),
-        "tts_audio_price": message_data.get("tts_audio_price", ""),
+        "speech_audio_file": message_data.get("speech_audio_file", ""),
+        "speech_audio_received_at": message_data.get("speech_audio_received_at", ""),
+        "speech_audio_price": message_data.get("speech_audio_price", ""),
     }
 
 

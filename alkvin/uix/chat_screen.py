@@ -39,7 +39,12 @@ class ChatScreen(MDScreen):
         prev_chat_id = self.chat.get("chat_id")
 
         self.chat = load_chat(self.chat_id)
-        self.messages = load_messages(self.chat_id)
+
+        messages = load_messages(self.chat_id)
+        if not messages:
+            self.create_completion_message()
+        else:
+            self.messages = messages
 
         if self.chat_id != prev_chat_id:
             self.ids.chat_scroll.scroll_y = 1
