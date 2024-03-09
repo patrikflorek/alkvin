@@ -176,8 +176,6 @@ class AudioPlayer:
         self._num_channels = 0
         self._rate = 0
 
-        self._warm_up_counter = 0  # To avoid audio glitches
-
     @property
     def playing_time(self):
         if (
@@ -218,8 +216,6 @@ class AudioPlayer:
 
         self._head_pos = 0
 
-        self._warm_up_counter = 0
-
         self._stream = self._p.open(
             format=self._format,
             channels=self._num_channels,
@@ -230,10 +226,6 @@ class AudioPlayer:
 
     def _stream_callback(self, in_data, frame_count, time_info, status):
         chunk_size = frame_count * self._sample_width * self._num_channels
-
-        if self._warm_up_counter < self.WARM_UP_ROUNDS:
-            self._warm_up_counter += 1
-            return (b"\x00" * chunk_size, pyaudio.paContinue)
 
         data = self._frames[self._head_pos : self._head_pos + chunk_size]
         self._head_pos += chunk_size
