@@ -9,6 +9,7 @@ from kivymd.uix.screenmanager import MDScreenManager
 
 from alkvin.uix.home_screen import HomeScreen
 from alkvin.uix.chat_screen import ChatScreen
+from alkvin.uix.chats_screen import ChatsScreen
 from alkvin.uix.settings_screen import SettingsScreen
 
 from alkvin.data import get_new_chat_id, create_chat
@@ -33,6 +34,7 @@ class AppRoot(MDScreenManager):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.add_widget(HomeScreen())
+        self.add_widget(ChatsScreen())
         self.add_widget(ChatScreen())
         self.add_widget(SettingsScreen())
 

@@ -230,7 +230,7 @@ Builder.load_string(
                         size_hint_y: None
                         height: self.texture_size[1]
                     MDIconButton:
-                        icon: "chevron-double-down"
+                        icon: "chevron-down"
                         theme_text_color: "Custom"
                         text_color: [0.4, 0.4, 0.4, 0.8]
                         pos_hint: {"center_x": .5}
