@@ -59,9 +59,11 @@ class AppRoot(MDScreenManager):
         else:
             if screen_name == "chat":
                 chat_id = kwargs.get("chat_id")
+                print("goto_screen chat_id", chat_id)
                 if chat_id is None:
                     chat_id = get_new_chat_id()
                     create_chat(chat_id)
+                    print("create new chat", chat_id)
 
                 self.get_screen(screen_name).chat_id = chat_id
 
