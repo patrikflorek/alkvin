@@ -129,8 +129,10 @@ class ChatScreen(MDScreen):
         summarization_massage = create_message(
             chat_id=self.chat_id,
             role="system",
-            transcript_text="Generate a title and a short summary (about 50 words) of the conversation so far. \
-                             Return them in JSON format with keys 'title' and 'summary'.",
+            transcript_text="Vytvor názov a krátky súhrn (približne 50 slov) z celej doterajšej konverzácie. \
+                             Výsledok vráť v formáte JSON s kľúčmi `title` a `summary`.",
+            # transcript_text="Generate a title and a short summary (about 50 words) of the conversation so far. \
+            #                  Return them in JSON format with keys 'title' and 'summary'.",
             message_sent_at=datetime.now().isoformat(),
         )
         summarization_messages = self.messages + [summarization_massage]

@@ -14,7 +14,7 @@ open_ai_client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 def generate_speech(text, callback):
     speech_audio = open_ai_client.audio.speech.create(
         input=text,
-        voice="alloy",
+        voice="shimmer",
         model="tts-1",
         response_format="wav",
     )

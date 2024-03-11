@@ -272,7 +272,7 @@ Builder.load_string(
                 text: root.transcript_text
                 theme_text_color: "Custom"
                 text_color: [.4, .4, .4]
-                font_style: "Body2"
+                font_style: "Body1"
                 adaptive_height: True
         
     MDRelativeLayout:
@@ -321,7 +321,7 @@ Builder.load_string(
             text: root.transcript_text
             theme_text_color: "Custom"
             text_color: [.4, .4, .4]
-            font_style: "Body2"
+            font_style: "Body1"
             adaptive_height: True
 
 

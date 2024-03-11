@@ -24,5 +24,6 @@ def generate_completion(instructions, messages, callback):
     completion = open_ai_client.chat.completions.create(
         messages=context, model="gpt-3.5-turbo"
     )
+    print("generate completion", completion.choices[0].message.content)
 
     Clock.schedule_once(lambda dt: callback(completion.choices[0].message.content))
