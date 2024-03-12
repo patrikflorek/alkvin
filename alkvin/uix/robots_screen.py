@@ -5,39 +5,39 @@ from kivymd.uix.list import TwoLineListItem
 from kivymd.uix.screen import MDScreen
 
 
-from alkvin.data import load_chat_list_items
+from alkvin.data import load_robot_list_items
 
 
-class ChatsScreen(MDScreen):
-    chat_list_items = ListProperty()
+class RobotsScreen(MDScreen):
+    robot_list_items = ListProperty()
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
     def on_pre_enter(self, *args):
-        self.chat_list_items = load_chat_list_items()
+        self.robot_list_items = load_robot_list_items()
 
 
-class ChatListItem(TwoLineListItem):
-    chat_id = StringProperty()
-    chat_title = StringProperty()
-    chat_summary = StringProperty()
+class RobotListItem(TwoLineListItem):
+    robot_file = StringProperty()
+    robot_name = StringProperty()
+    robot_description = StringProperty()
 
 
 Builder.load_string(
     """
-<ChatsScreen>:
-    name: "chats"
+<RobotsScreen>:
+    name: "robots"
 
     MDBoxLayout:
         orientation: "vertical"
         MDTopAppBar:
-            title: "Chats"
+            title: "Robots"
             left_action_items: [["home", lambda x: app.root.goto_screen("home")]]
         
         RecycleView:
-            data: root.chat_list_items
-            viewclass: "ChatListItem"
+            data: root.robot_list_items
+            viewclass: "RobotListItem"
 
             RecycleBoxLayout:
                 orientation: "vertical"
@@ -51,15 +51,15 @@ Builder.load_string(
         anchor_y: "bottom"
         padding: dp(48)        
         MDFloatingActionButton:
-            icon: "message-plus"
+            icon: "robot-love"
             type: "large"
             elevation_normal: 12
-            on_release: app.root.goto_screen("chat")
+            on_release: app.root.goto_screen("robot")
 
 
-<ChatListItem>:
-    text: self.chat_title
-    secondary_text: self.chat_summary
-    on_release: app.root.goto_screen("chat", chat_id=self.chat_id)
+<RobotListItem>:
+    text: self.robot_name
+    secondary_text: self.robot_description
+    on_release: app.root.goto_screen("robot", robot_file=self.robot_file)
 """
 )

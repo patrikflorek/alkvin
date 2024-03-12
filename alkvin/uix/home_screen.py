@@ -84,7 +84,7 @@ Builder.load_string(
                             anchor_y: "center"
                         
                             MDIcon:
-                                icon: "account-voice"
+                                icon: "account"
                                 font_size: "80sp"
                                 color: "white"
 
@@ -104,7 +104,7 @@ Builder.load_string(
                     height: dp(200)
                     
                     MDCard:
-                        id: assistants_card
+                        id: robots_card
                         orientation: "vertical"
                         size_hint: None, None
                         size: dp(200), dp(200)
@@ -112,7 +112,7 @@ Builder.load_string(
                         spacing: dp(20)
                         radius: [20, 20, 20, 20]
                         md_bg_color: app.theme_cls.primary_color
-                        on_release: print("Assistants")
+                        on_release: app.root.goto_screen("robots")
 
                         AnchorLayout:
                             anchor_x: "center"
@@ -124,7 +124,7 @@ Builder.load_string(
                                 color: "white"
 
                         MDLabel:
-                            text: "Assistants"
+                            text: "Robots"
                             halign: "center"
                             font_style: "H5"
                             theme_text_color: "Custom"

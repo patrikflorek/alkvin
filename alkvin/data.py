@@ -7,90 +7,6 @@ import shutil
 from datetime import datetime
 
 
-# Models
-
-DEFAULT_TRANSCRIPTION_MODEL = "openai/whisper-1"
-DEFAULT_COMPLETION_MODEL = "openai/gpt-3.5-turbo"
-DEFAULT_SPEECH_MODEL = "openai/tts-1"
-
-DEFAULT_INSTRUCTIONS_EN = """
-You are an AI language tutor. Your task is to help the user improve their English. 
-The user will send you messages, which are transcriptions of their spoken words. 
-These transcriptions might contain errors or be hard to understand due to the 
-limitations of speech-to-text technology. 
-
-Your job is to understand the user's intended message, correct any grammatical 
-errors, and provide a clear and understandable response.
-
-Start your response by rephrasing the user's message in correct English.
-Then, answer any questions or respond to any statements the user made.
-
-Occasionally, I, the system, will provide you with instructions to modify your 
-responses. 
-
-Remember, you must only respond in English.
-
-Also, avoid filling your responses with unnecessary formalities and cheering. 
-Keep your responses concise and focused on correcting the user's language and 
-answering their questions.
-
-Please follow these instructions carefully.
-
-Start by greeting the user and offering them to start a conversation in one or two sentences.
-"""
-
-DEFAULT_INSTRUCTIONS_SK = """
-Si AI jazykový tútor. Tvojou úlohou je pomôcť používateľovi zlepšiť jeho angličtinu.
-Používateľ ti bude posielať správy, ktoré sú prepisy jeho hovorených slov. Tieto 
-prepisy môžu obsahovať chyby alebo byť ťažko zrozumiteľné kvôli obmedzeniam 
-technológie prekladu reči na text.
-
-Tvoja úloha je pochopiť zamýšľanú správu používateľa, opraviť akékoľvek gramatické 
-chyby a poskytnúť jasnú a zrozumiteľnú odpoveď. Začni svoju odpoveď prepísaním správy 
-používateľa v správnej angličtine. Potom odpovedz na akékoľvek otázky alebo reaguj na 
-akékoľvek tvrdenia, ktoré používateľ urobil.
-
-Občas ti ja, systém, dám inštrukcie, ktoré 
-následuj a podľa nich uprav svoje odpoved. 
-
-Pamätaj, musíš odpovedať iba po anglicky. 
-
-Prosím, vyhýbaj sa zbytočným formalitám a povzbudzovaniu. Odpovedaj stručne a 
-zameriavaj sa na opravu aglickej gramatiky v používateľovej správe a čo najjasnejšie
-odpovedanie na jeho otázky.
-
-Prosím, starostlivo dodržiavaj tieto pravidlá.
-
-Začni tým, že pozdravíš používateľa a v jednej alebo dvoch vetách mu dáš návrh na tému konverzácie.
-"""
-
-GENERAL_INSTRUCTIONS_SK = """
-Si užitočný vzdelávací pomocník, ktorý dokáže jednoduchou a zrozumiteľnou 
-formou odpovedať na zložité otázky a pomáha nájsť riešenia komplexných problémov.
-
-Používateľ ti bude posielať správy, ktoré sú prepisy jeho hovorených slov. Tieto 
-prepisy môžu obsahovať chyby alebo byť ťažko zrozumiteľné kvôli obmedzeniam 
-technológie prekladu reči na text.
-
-Tvoja úloha je pochopiť zamýšľanú správu používateľa, opraviť akékoľvek chyby, 
-ktoré mohli nastať počas prenosu informácie od užívateľa a potom poskytnúť jasnú a 
-zrozumiteľnú odpoveď.
-
-Ak odpoveď nepoznáš alebo si ňou nie si istý, povedz, že nevieš odpovedať alebo si si odpoveďou nie istý.
-
-Občas ti uprostred diskusie ja, systém, dám inštrukcie, ktoré dôsledne následuj 
-a podľa nich modifikuj svoje odpovede.
-
-Svoju odpoveď sa snaž vmestnať do 100 slov. Vyhni sa rekapitulovaniu toho, čo už bolo povedané v konverzácii vyššie.
-
-Prosím, starostlivo dodržiavaj tieto pravidlá.
-
-Začni tým, že pozdravíš používateľa a v jednej alebo dvoch vetách mu dáš návrh na tému konverzácie.
-"""
-
-DEFAULT_INSTRUCTIONS = GENERAL_INSTRUCTIONS_SK
-
-
 # Chats
 
 CHATS_PATH = os.path.abspath("data/chats/")
@@ -145,12 +61,9 @@ def create_chat(chat_id):
                 "chat_summary": DEFAULT_CHAT_SUMMARY,
                 "chat_created_at": created_at,
                 "chat_modified_at": created_at,
-                "transcription_model": DEFAULT_TRANSCRIPTION_MODEL,
-                "completion_model": DEFAULT_COMPLETION_MODEL,
-                "speech_model": DEFAULT_SPEECH_MODEL,
-                "instructions": DEFAULT_INSTRUCTIONS,
             },
             f,
+            indent=2,
         )
 
     with open(os.path.join(CHATS_PATH, chat_id, "messages.json"), "w") as f:
@@ -169,7 +82,7 @@ def save_chat(chat):
     chat_path = os.path.join(CHATS_PATH, chat_id, "chat.json")
 
     with open(chat_path, "w") as f:
-        json.dump(chat, f)
+        json.dump(chat, f, indent=2)
 
 
 def delete_chat(chat_id):
@@ -228,7 +141,7 @@ def save_messages(chat_id, messages):
     )
 
     with open(messages_path, "w") as f:
-        json.dump(clean_messages, f)
+        json.dump(clean_messages, f, indent=2)
 
 
 # Audio
@@ -247,3 +160,123 @@ def get_audio_path(chat_id, audio_filename):
     """Return the path to the audio file in the given chat."""
 
     return os.path.join(CHATS_PATH, chat_id, audio_filename)
+
+
+# Robots
+
+ROBOTS_PATH = os.path.abspath("data/robots/")
+
+ROBOT_DEFAULT_FILE = "dummybot.json"
+
+ROBOT_DEFAULT_LANGUAGE = "en"
+ROBOT_DEFAULT_SPEECH_TO_TEXT_MODEL = "whisper-1"
+ROBOT_DEFAULT_SPEECH_TO_TEXT_PROMPT = "Transcribe the following audio."
+ROBOT_DEFAULT_TEXT_GENERATION_MODEL = "gpt-3.5-turbo"
+ROBOT_DEFAULT_INSTRUCTIONS_PROMPT = "Respond whatever you think is appropriate."
+ROBOT_DEFAULT_SUMMARIZATION_PROMPT = "Generate a title and a short summary (about 50 words) of the conversation so far. Return them in JSON format with keys 'title' and 'summary'."
+ROBOT_DEFAULT_TEXT_TO_SPEECH_MODEL = "tts-1"
+
+
+def load_robot_list_items():
+    """Return a list of robot items with the robot id, name, description etc."""
+
+    robots_data = []
+
+    robot_files = [
+        file
+        for file in os.listdir(ROBOTS_PATH)
+        if os.path.isfile(os.path.join(ROBOTS_PATH, file))
+    ]
+    for robot_file in robot_files:
+        robot_json_path = os.path.join("data/robots", robot_file)
+        with open(robot_json_path) as f:
+            robot_data = json.load(f)
+
+        robot_data["robot_file"] = robot_file
+        robots_data.append(robot_data)
+
+    robots_data.sort(key=lambda d: d["robot_name"])
+
+    return robots_data
+
+
+def get_new_robot_file():
+    """Return a robot name which is 12 characters long random alphanumeric string."""
+
+    return "".join(random.choices(string.ascii_letters + string.digits, k=12)) + ".json"
+
+
+def get_default_robot_file():
+    return ROBOT_DEFAULT_FILE
+
+
+def create_robot(robot_file):
+    """Create a new robot with the given name. Raises an error if the robot already exists."""
+
+    robot_path = os.path.join(ROBOTS_PATH, robot_file)
+    if os.path.exists(robot_path):
+        raise ValueError(f"Robot with file {robot_file} already exists.")
+
+    with open(robot_path, "w") as f:
+        json.dump(
+            {
+                "robot_name": "New Robot",
+                "robot_description": "This is a new robot.",
+                "robot_language": ROBOT_DEFAULT_LANGUAGE,
+                "robot_speech_to_text_model": ROBOT_DEFAULT_SPEECH_TO_TEXT_MODEL,
+                "robot_speech_to_text_prompt": ROBOT_DEFAULT_SPEECH_TO_TEXT_PROMPT,
+                "robot_text_generation_model": ROBOT_DEFAULT_TEXT_GENERATION_MODEL,
+                "robot_instructions_prompt": ROBOT_DEFAULT_INSTRUCTIONS_PROMPT,
+                "robot_summarization_prompt": ROBOT_DEFAULT_SUMMARIZATION_PROMPT,
+                "robot_text_to_speech_model": ROBOT_DEFAULT_TEXT_TO_SPEECH_MODEL,
+            },
+            f,
+            indent=2,
+        )
+
+
+def load_robot(robot_file):
+    with open(os.path.join(ROBOTS_PATH, robot_file)) as f:
+        robot_data = json.load(f)
+
+    return {
+        "robot_file": robot_file,
+        "robot_name": robot_data["robot_name"],
+        "robot_description": robot_data["robot_description"],
+        "robot_language": robot_data.get("robot_language", ROBOT_DEFAULT_LANGUAGE),
+        "robot_speech_to_text_model": robot_data.get(
+            "robot_speech_to_text_model", ROBOT_DEFAULT_SPEECH_TO_TEXT_MODEL
+        ),
+        "robot_speech_to_text_prompt": robot_data.get(
+            "robot_speech_to_text_prompt", ROBOT_DEFAULT_SPEECH_TO_TEXT_PROMPT
+        ),
+        "robot_text_generation_model": robot_data.get(
+            "robot_text_generation_model", ROBOT_DEFAULT_TEXT_GENERATION_MODEL
+        ),
+        "robot_instructions_prompt": robot_data.get(
+            "robot_instructions_prompt", ROBOT_DEFAULT_INSTRUCTIONS_PROMPT
+        ),
+        "robot_summarization_prompt": robot_data.get(
+            "robot_summarization_prompt", ROBOT_DEFAULT_SUMMARIZATION_PROMPT
+        ),
+        "robot_text_to_speech_model": robot_data.get(
+            "robot_text_to_speech_model", ROBOT_DEFAULT_TEXT_TO_SPEECH_MODEL
+        ),
+    }
+
+
+def save_robot(robot):
+    robot_file = robot["robot_file"]
+    robot_path = os.path.join(ROBOTS_PATH, robot_file)
+
+    robot_data = {k: v for k, v in robot.items() if k != "robot_file"}
+
+    with open(robot_path, "w") as f:
+        json.dump(robot_data, f, indent=2)
+
+
+def delete_robot(robot_file):
+    """Delete the robot with given file."""
+
+    robot_path = os.path.join(ROBOTS_PATH, robot_file)
+    os.remove(robot_path)
