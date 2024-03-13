@@ -74,6 +74,8 @@ def load_chat_list_items():
 
     chat_list_items = []
 
+    os.makedirs(CHATS_PATH, exist_ok=True)
+
     chat_dirs = [
         file
         for file in os.listdir(CHATS_PATH)
