@@ -10,6 +10,7 @@ from alkvin.data import load_robot, save_robot, delete_robot
 
 class RobotScreen(MDScreen):
     robot_file = StringProperty()
+
     robot = DictProperty(
         {
             "robot_file": "",
@@ -35,6 +36,9 @@ class RobotScreen(MDScreen):
             self.ids.robot_scroll.scroll_y = 1
 
     def save_robot(self):
+        if self.robot_file != self.robot["robot_file"]:
+            delete_robot(self.robot_file)
+
         save_robot(self.robot)
 
     def open_delete_robot_dialog(self):
@@ -81,7 +85,6 @@ Builder.load_string(
             left_action_items: [["arrow-left", lambda x: app.root.goto_previous_screen()]]
             right_action_items: 
                 [
-                ["content-save", lambda x: root.save_robot(), "Save robot", "Save robot"],
                 ["content-copy", lambda x: root.clone_robot(), "Clone robot", "Clone robot"],
                 ["delete", lambda x: root.open_delete_robot_dialog(), "Delete robot", "Delete robot"]
                 ]       

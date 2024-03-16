@@ -104,7 +104,6 @@ class AppRoot(MDScreenManager):
 
     def goto_screen(self, screen_name, direction="forward", **kwargs):
         self.transition.direction = "right" if direction == "back" else "left"
-        print(self.transition.direction)
 
         self.screens_history.append((screen_name, kwargs))
 
