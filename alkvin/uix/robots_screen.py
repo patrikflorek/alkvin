@@ -33,7 +33,7 @@ Builder.load_string(
         orientation: "vertical"
         MDTopAppBar:
             title: "Robots"
-            left_action_items: [["home", lambda x: app.root.goto_screen("home")]]
+            left_action_items: [["arrow-left", lambda x: app.root.goto_previous_screen()]]
         
         RecycleView:
             data: root.robot_list_items

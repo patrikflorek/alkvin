@@ -30,10 +30,12 @@ class RobotScreen(MDScreen):
         prev_robot_file = self.robot.get("robot_file")
 
         self.robot = load_robot(self.robot_file)
-        print(self.robot)
 
         if self.robot_file != prev_robot_file:
             self.ids.robot_scroll.scroll_y = 1
+
+    def save_robot(self):
+        save_robot(self.robot)
 
     def open_delete_robot_dialog(self):
         if not self.delete_robot_dialog:
@@ -78,8 +80,11 @@ Builder.load_string(
             title: root.robot['robot_name']
             left_action_items: [["arrow-left", lambda x: app.root.goto_previous_screen()]]
             right_action_items: 
-                [["delete", lambda x: root.open_delete_chat_dialog(), "Delete chat", "Delete chat"]]
-        
+                [
+                ["content-save", lambda x: root.save_robot(), "Save robot", "Save robot"],
+                ["content-copy", lambda x: root.clone_robot(), "Clone robot", "Clone robot"],
+                ["delete", lambda x: root.open_delete_robot_dialog(), "Delete robot", "Delete robot"]
+                ]       
         ScrollView:
             id: robot_scroll
             MDBoxLayout:

@@ -18,6 +18,7 @@ from alkvin.data import (
     create_message,
     save_messages,
     get_audio_path,
+    load_robot,
 )
 
 from alkvin.uix.components.chat_bubble import ChatBubbleBox
@@ -31,6 +32,8 @@ class ChatScreen(MDScreen):
     chat_id = StringProperty()
 
     chat = DictProperty({"chat_title": "", "chat_summary": ""})
+
+    robot = DictProperty({"robot_file": "", "robot_name": "", "robot_description": ""})
 
     messages = ListProperty()
 
@@ -49,11 +52,16 @@ class ChatScreen(MDScreen):
         self.chat_id = self.chat["chat_id"]
 
         self.messages = load_messages(self.chat_id)
+
+        self.robot = load_robot(self.chat["robot_file"])
+
         if not self.messages:
             self.create_completion_message()
 
         if self.chat_id != prev_chat_id:
             self.ids.chat_scroll.scroll_y = 1
+
+        print("Robot", self.robot)
 
     def on_pre_leave(self, *args):
         self._audio_bus.stop()
@@ -109,8 +117,11 @@ class ChatScreen(MDScreen):
         self.messages = load_messages(self.chat_id)
 
     def create_completion_message(self):
+        print(self.robot)
         generate_completion(
-            self.chat["instructions"], self.messages, self._on_completion_create_message
+            self.robot["robot_instructions_prompt"],
+            self.messages,
+            self._on_completion_create_message,
         )
 
     def _on_completion_create_message(self, completion_text):
@@ -129,16 +140,15 @@ class ChatScreen(MDScreen):
         summarization_massage = create_message(
             chat_id=self.chat_id,
             role="system",
-            transcript_text="Vytvor názov a krátky súhrn (približne 50 slov) z celej doterajšej konverzácie. \
-                             Výsledok vráť v formáte JSON s kľúčmi `title` a `summary`.",
-            # transcript_text="Generate a title and a short summary (about 50 words) of the conversation so far. \
-            #                  Return them in JSON format with keys 'title' and 'summary'.",
+            transcript_text=self.robot["robot_summarization_prompt"],
             message_sent_at=datetime.now().isoformat(),
         )
         summarization_messages = self.messages + [summarization_massage]
 
         generate_completion(
-            self.chat["instructions"], summarization_messages, self._on_summarized_chat
+            self.robot["robot_instructions_prompt"],
+            summarization_messages,
+            self._on_summarized_chat,
         )
 
     def _on_summarized_chat(self, summary_str):
