@@ -205,6 +205,10 @@ def get_new_robot_file():
     return "".join(random.choices(string.ascii_letters + string.digits, k=12)) + ".json"
 
 
+def robot_file_exists(robot_file):
+    return os.path.exists(os.path.join(ROBOTS_PATH, robot_file))
+
+
 def get_default_robot_file():
     return ROBOT_DEFAULT_FILE
 

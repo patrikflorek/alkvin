@@ -86,7 +86,8 @@ class AppRoot(MDScreenManager):
         self.current = "settings"
 
     def goto_previous_screen(self):
-        current_screen = self.screens_history.pop()  # pop the current screen
+        self.screens_history.pop()  # pop the current screen
+
         if len(self.screens_history) > 0:
             screen_to_go_name_and_kwargs = self.screens_history.pop()
             if type(screen_to_go_name_and_kwargs) == str:
@@ -101,6 +102,9 @@ class AppRoot(MDScreenManager):
             self.goto_screen("home", direction="back")
 
     def goto_screen(self, screen_name, direction="forward", **kwargs):
+        print(
+            f"Going to screen: {screen_name}, direction: {direction}, kwargs: {kwargs}"
+        )
         self.transition.direction = "right" if direction == "back" else "left"
 
         screen_history_item = (screen_name, kwargs)
@@ -108,7 +112,6 @@ class AppRoot(MDScreenManager):
             self.screens_history.remove(screen_history_item)
 
         self.screens_history.append((screen_name, kwargs))
-        print("goto_screen", self.screens_history)
 
         if screen_name == "home":
             self._goto_home_screen()

@@ -1,3 +1,5 @@
+import os
+
 from kivy.lang import Builder
 from kivy.properties import DictProperty, StringProperty
 
@@ -5,7 +7,7 @@ from kivymd.uix.screen import MDScreen
 from kivymd.uix.dialog import MDDialog
 from kivymd.uix.button import MDFlatButton
 
-from alkvin.data import load_robot, save_robot, delete_robot
+from alkvin.data import load_robot, save_robot, delete_robot, robot_file_exists
 
 
 class RobotScreen(MDScreen):
@@ -26,7 +28,7 @@ class RobotScreen(MDScreen):
         }
     )
 
-    robot_dialog = None
+    delete_robot_dialog = None
 
     def on_pre_enter(self, *args):
         prev_robot_file = self.robot.get("robot_file")
@@ -37,6 +39,9 @@ class RobotScreen(MDScreen):
             self.ids.robot_scroll.scroll_y = 1
 
     def on_pre_leave(self, *args):
+        if not robot_file_exists(self.robot_file):
+            return
+
         if self.robot_file != self.robot["robot_file"]:
             delete_robot(self.robot_file)
             self.robot_file = self.robot["robot_file"]
