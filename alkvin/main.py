@@ -17,7 +17,6 @@ from alkvin.uix.settings_screen import SettingsScreen
 from alkvin.data import (
     get_new_chat_id,
     create_chat,
-    get_default_robot_file,
     get_new_robot_file,
     create_robot,
 )
@@ -87,8 +86,7 @@ class AppRoot(MDScreenManager):
         self.current = "settings"
 
     def goto_previous_screen(self):
-        self.screens_history.pop()  # pop the current screen
-
+        current_screen = self.screens_history.pop()  # pop the current screen
         if len(self.screens_history) > 0:
             screen_to_go_name_and_kwargs = self.screens_history.pop()
             if type(screen_to_go_name_and_kwargs) == str:
@@ -110,6 +108,7 @@ class AppRoot(MDScreenManager):
             self.screens_history.remove(screen_history_item)
 
         self.screens_history.append((screen_name, kwargs))
+        print("goto_screen", self.screens_history)
 
         if screen_name == "home":
             self._goto_home_screen()

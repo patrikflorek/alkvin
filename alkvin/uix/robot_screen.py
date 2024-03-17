@@ -26,8 +26,9 @@ class RobotScreen(MDScreen):
         }
     )
 
+    robot_dialog = None
+
     def on_pre_enter(self, *args):
-        print("RobotScreen on_pre_enter", self.robot_file)
         prev_robot_file = self.robot.get("robot_file")
 
         self.robot = load_robot(self.robot_file)
@@ -35,14 +36,15 @@ class RobotScreen(MDScreen):
         if self.robot_file != prev_robot_file:
             self.ids.robot_scroll.scroll_y = 1
 
-    def save_robot(self):
+    def on_pre_leave(self, *args):
         if self.robot_file != self.robot["robot_file"]:
             delete_robot(self.robot_file)
+            self.robot_file = self.robot["robot_file"]
 
         save_robot(self.robot)
 
     def open_delete_robot_dialog(self):
-        if not self.delete_robot_dialog:
+        if self.delete_robot_dialog is None:
             self.delete_robot_dialog = MDDialog(
                 title="Delete robot",
                 text="Are you sure you want to delete this robot?",

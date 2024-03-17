@@ -14,7 +14,7 @@ class RobotsScreen(MDScreen):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
-    def on_pre_enter(self, *args):
+    def on_enter(self, *args):
         self.robot_list_items = load_robot_list_items()
 
 

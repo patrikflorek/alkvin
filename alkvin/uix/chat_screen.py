@@ -45,7 +45,6 @@ class ChatScreen(MDScreen):
         self._audio_bus.set_on_save_recording_callback(self.on_save_recording)
 
     def on_pre_enter(self, *args):
-        print("ChatScreen on_pre_enter", self.chat_id)
         prev_chat_id = self.chat.get("chat_id")
 
         self.chat = load_chat(self.chat_id)
@@ -60,8 +59,6 @@ class ChatScreen(MDScreen):
 
         if self.chat_id != prev_chat_id:
             self.ids.chat_scroll.scroll_y = 1
-
-        print("Robot", self.robot)
 
     def on_pre_leave(self, *args):
         self._audio_bus.stop()
@@ -117,7 +114,6 @@ class ChatScreen(MDScreen):
         self.messages = load_messages(self.chat_id)
 
     def create_completion_message(self):
-        print(self.robot)
         generate_completion(
             self.robot["robot_instructions_prompt"],
             self.messages,
@@ -162,7 +158,7 @@ class ChatScreen(MDScreen):
         save_chat(self.chat)
 
     def open_delete_chat_dialog(self):
-        if not self.delete_chat_dialog:
+        if self.delete_chat_dialog is None:
             self.delete_chat_dialog = MDDialog(
                 title="Delete chat",
                 text="Are you sure you want to delete this chat?",

@@ -196,7 +196,6 @@ def load_robot_list_items():
         robots_data.append(robot_data)
 
     robots_data.sort(key=lambda d: d["robot_name"])
-
     return robots_data
 
 
