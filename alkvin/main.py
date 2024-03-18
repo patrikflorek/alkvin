@@ -12,6 +12,7 @@ from alkvin.uix.chat_screen import ChatScreen
 from alkvin.uix.chats_screen import ChatsScreen
 from alkvin.uix.robots_screen import RobotsScreen
 from alkvin.uix.robot_screen import RobotScreen
+from alkvin.uix.replicated_robot_screen import ReplicatedRobotScreen
 from alkvin.uix.settings_screen import SettingsScreen
 
 from alkvin.data import (
@@ -45,6 +46,7 @@ class AppRoot(MDScreenManager):
         self.add_widget(ChatScreen())
         self.add_widget(RobotsScreen())
         self.add_widget(RobotScreen())
+        self.add_widget(ReplicatedRobotScreen())
         self.add_widget(SettingsScreen())
 
         Window.bind(on_keyboard=self._esc_to_previous_screen)
@@ -82,29 +84,46 @@ class AppRoot(MDScreenManager):
 
         self.current = "robot"
 
+    def _goto_replicated_robot_screen(self, robot_file):
+        self.get_screen("replicated_robot").create_robot_replica(robot_file)
+
+        self.current = "replicated_robot"
+
     def _goto_settings_screen(self, **kwargs):
         self.current = "settings"
 
     def goto_previous_screen(self):
-        self.screens_history.pop()  # pop the current screen
+        current_screen_and_kwargs = self.screens_history.pop()  # pop the current screen
+        if type(current_screen_and_kwargs) == str:
+            current_screen_name = current_screen_and_kwargs
+            kwargs = {}
+        else:
+            current_screen_name, current_screen_kwargs = current_screen_and_kwargs
+
+        if current_screen_name == "replicated_robot":
+            # Return to the screen that viewed the parent robot
+            self.screens_history.pop()
+
+        if current_screen_name in ["robot", "replicated_robot"]:
+            # Leave information to the viewing screen about the last examined robot
+            self.get_screen(current_screen_name).last_viewed_robot_file = (
+                current_screen_kwargs.get("robot_file")
+            )
 
         if len(self.screens_history) > 0:
             screen_to_go_name_and_kwargs = self.screens_history.pop()
             if type(screen_to_go_name_and_kwargs) == str:
                 screen_to_go_name = screen_to_go_name_and_kwargs
-                kwargs = {}
+                screen_to_go_kwargs = {}
             else:
-                screen_to_go_name, kwargs = screen_to_go_name_and_kwargs
+                screen_to_go_name, screen_to_go_kwargs = screen_to_go_name_and_kwargs
 
-            self.goto_screen(screen_to_go_name, direction="back", **kwargs)
+            self.goto_screen(screen_to_go_name, direction="back", **screen_to_go_kwargs)
 
         elif self.current != "home":
             self.goto_screen("home", direction="back")
 
     def goto_screen(self, screen_name, direction="forward", **kwargs):
-        print(
-            f"Going to screen: {screen_name}, direction: {direction}, kwargs: {kwargs}"
-        )
         self.transition.direction = "right" if direction == "back" else "left"
 
         screen_history_item = (screen_name, kwargs)
@@ -123,5 +142,7 @@ class AppRoot(MDScreenManager):
             self._goto_robots_screen()
         elif screen_name == "robot":
             self._goto_robot_screen(robot_file=kwargs.get("robot_file"))
+        elif screen_name == "replicated_robot":
+            self._goto_replicated_robot_screen(robot_file=kwargs.get("robot_file"))
         elif screen_name == "settings":
             self._goto_settings_screen()

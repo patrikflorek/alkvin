@@ -7,10 +7,16 @@ from kivymd.uix.screen import MDScreen
 from kivymd.uix.dialog import MDDialog
 from kivymd.uix.button import MDFlatButton
 
-from alkvin.data import load_robot, save_robot, delete_robot, robot_file_exists
+from alkvin.data import (
+    create_robot,
+    load_robot,
+    save_robot,
+    delete_robot,
+    robot_file_exists,
+)
 
 
-class RobotScreen(MDScreen):
+class ReplicatedRobotScreen(MDScreen):
     robot_file = StringProperty()
 
     robot = DictProperty(
@@ -30,6 +36,30 @@ class RobotScreen(MDScreen):
 
     delete_robot_dialog = None
 
+    def create_robot_replica(self, robot_file):
+        orig_robot = load_robot(robot_file)
+        self.robot = orig_robot.copy()
+
+        orig_file_name, file_extension = os.path.splitext(robot_file)
+        replica_file_name = orig_file_name + "_replica"
+        replica_count = 1
+
+        while robot_file_exists(
+            f"{replica_file_name}_{replica_count}" + file_extension
+        ):
+            replica_count += 1
+
+        self.robot["robot_file"] = (
+            f"{replica_file_name}_{replica_count}" + file_extension
+        )
+        self.robot["robot_name"] = "Replica of " + self.robot["robot_name"]
+
+        create_robot(self.robot["robot_file"])
+
+        save_robot(self.robot)
+
+        self.robot_file = self.robot["robot_file"]
+
     def on_pre_enter(self, *args):
         prev_robot_file = self.robot.get("robot_file")
 
@@ -44,12 +74,9 @@ class RobotScreen(MDScreen):
 
         if self.robot_file != self.robot["robot_file"]:
             delete_robot(self.robot_file)
-            self.robot_file = self.robot["robot_file"]
+            # self.robot_file = self.robot["robot_file"]
 
         save_robot(self.robot)
-
-    def replicate_robot(self):
-        self.manager.goto_screen("replicated_robot", robot_file=self.robot_file)
 
     def open_delete_robot_dialog(self):
         if self.delete_robot_dialog is None:
@@ -83,8 +110,8 @@ Builder.load_string(
 #:import os os
 
 
-<RobotScreen>:
-    name: "robot"
+<ReplicatedRobotScreen>:
+    name: "replicated_robot"
     
     MDBoxLayout:
         orientation: "vertical"
@@ -94,10 +121,7 @@ Builder.load_string(
             title: root.robot['robot_name']
             left_action_items: [["arrow-left", lambda x: app.root.goto_previous_screen()]]
             right_action_items: 
-                [
-                ["content-copy", lambda x: root.replicate_robot(), "Replicate robot", "Replicate robot"],
-                ["delete", lambda x: root.open_delete_robot_dialog(), "Delete robot", "Delete robot"]
-                ]       
+                [["delete", lambda x: root.open_delete_robot_dialog(), "Delete robot", "Delete robot"]]       
         ScrollView:
             id: robot_scroll
             MDBoxLayout:
