@@ -1,7 +1,11 @@
 import os
 import json
 
+from functools import reduce
+
 from datetime import datetime
+
+from kivy.app import App
 
 from kivy.lang import Builder
 from kivy.properties import DictProperty, ListProperty, StringProperty
@@ -9,6 +13,7 @@ from kivy.properties import DictProperty, ListProperty, StringProperty
 from kivymd.uix.screen import MDScreen
 from kivymd.uix.dialog import MDDialog
 from kivymd.uix.button import MDFlatButton
+from kivymd.uix.list import OneLineAvatarIconListItem
 
 from alkvin.data import (
     load_chat,
@@ -18,6 +23,7 @@ from alkvin.data import (
     create_message,
     save_messages,
     get_audio_path,
+    load_robot_list_items,
     load_robot,
 )
 
@@ -26,6 +32,26 @@ from alkvin.uix.components.chat_bubble import ChatBubbleBox
 from alkvin.audio import get_audio_bus
 
 from alkvin.completion import generate_completion
+
+
+class RobotsListItem(OneLineAvatarIconListItem):
+    divider = None
+
+    robot = DictProperty({"robot_name": ""})
+
+    def __init__(self, robot, **kwargs):
+        super().__init__(**kwargs)
+        self.robot = robot
+        self.app = App.get_running_app()
+
+    def edit_robot(self):
+        chat_screen = self.app.root.get_screen("chat")
+        if chat_screen.select_robot_dialog is not None:
+            chat_screen.select_robot_dialog.dismiss()
+        self.app.root.goto_screen("robot", robot_file=self.robot["robot_file"])
+
+    def on_release(self):
+        self.ids.radio_check.active = True
 
 
 class ChatScreen(MDScreen):
@@ -39,12 +65,16 @@ class ChatScreen(MDScreen):
 
     delete_chat_dialog = None
 
+    select_robot_dialog = None
+
+    selected_robot_file = None
+
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self._audio_bus = get_audio_bus()
         self._audio_bus.set_on_save_recording_callback(self.on_save_recording)
 
-    def on_pre_enter(self, *args):
+    def on_enter(self, *args):
         prev_chat_id = self.chat.get("chat_id")
 
         self.chat = load_chat(self.chat_id)
@@ -52,16 +82,76 @@ class ChatScreen(MDScreen):
 
         self.messages = load_messages(self.chat_id)
 
-        self.robot = load_robot(self.chat["robot_file"])
+        robot_file = self.chat.get("chat_robot_file")
 
-        if not self.messages:
-            self.create_completion_message()
+        # If the chat has a robot file and it is either the same as selected robot file or selected robot file is None, then load the robot
+        if robot_file is not None and (
+            robot_file == self.selected_robot_file or self.selected_robot_file is None
+        ):
+            self.robot = load_robot(robot_file)
+            self.selected_robot_file = robot_file
+        else:
+            self.open_select_robot_dialog()
+
+        # if not self.messages:
+        #     self.create_completion_message()
 
         if self.chat_id != prev_chat_id:
             self.ids.chat_scroll.scroll_y = 1
 
     def on_pre_leave(self, *args):
         self._audio_bus.stop()
+
+    def open_select_robot_dialog(self):
+        robot_list_items = [
+            RobotsListItem(robot_item_data)
+            for robot_item_data in load_robot_list_items()
+        ]
+
+        for robot_list_item in robot_list_items:
+            if robot_list_item.robot["robot_file"] == self.selected_robot_file:
+                robot_list_item.ids.radio_check.active = True
+
+        if self.selected_robot_file is None:
+            self.selected_robot_file = robot_list_items[0].robot["robot_file"]
+            robot_list_items[0].ids.radio_check.active = True
+
+        if not self.select_robot_dialog:
+            self.select_robot_dialog = MDDialog(
+                title="Select a robot to chat with",
+                type="confirmation",
+                items=robot_list_items,
+                buttons=[
+                    MDFlatButton(
+                        text="CREATE NEW",
+                        text_color=self.theme_cls.primary_color,
+                        on_release=lambda: self.manager.goto_screen("robot"),
+                    ),
+                    MDFlatButton(
+                        text="SELECT",
+                        text_color=self.theme_cls.primary_color,
+                        on_release=lambda x: self.select_robot(
+                            reduce(
+                                lambda a, b: a if a.ids.radio_check.active else b,
+                                robot_list_items,
+                            )
+                        ),
+                    ),
+                ],
+                auto_dismiss=False,
+            )
+        else:
+            print(self.select_robot_dialog, robot_list_items)
+            self.select_robot_dialog.update_items(robot_list_items)
+
+        self.select_robot_dialog.open()
+
+    def select_robot(self, robot_item):
+        self.selected_robot_file = robot_item.robot["robot_file"]
+        self.robot = load_robot(robot_item.robot["robot_file"])
+        self.chat["chat_robot_file"] = robot_item.robot["robot_file"]
+        save_chat(self.chat)
+        self.select_robot_dialog.dismiss()
 
     def on_messages(self, instance, messages):
         self.ids.chat_box.clear_widgets()
@@ -201,8 +291,8 @@ Builder.load_string(
             left_action_items: [["arrow-left", lambda x: app.root.goto_previous_screen()]]
             right_action_items: 
                 [
-                ["package-variant", lambda x: root.summarize_chat(), "Summarize chat", "Summarize chat"],
-                ["message-cog", lambda x: None, "Chat settings", "Chat settings"],
+                ["file-document", lambda x: root.summarize_chat(), "Summarize chat", "Summarize chat"],
+                ["robot", lambda x: root.open_select_robot_dialog(), "Select robot", "Select robot"],
                 ["delete", lambda x: root.open_delete_chat_dialog(), "Delete chat", "Delete chat"],
                 ]
         
@@ -261,15 +351,20 @@ Builder.load_string(
             id: audio_recorder
             chat_id: root.chat_id
 
-    AnchorLayout:
-        anchor_x: "right"
-        anchor_y: "top"
-        padding: dp(48), dp(96)        
-        MDFloatingActionButton:
-            icon: "robot"
-            type: "large"
-            elevation_normal: 12
-            on_release: None
-            md_bg_color: [0.2, 0.6, 0.8, 1]
+
+<RobotsListItem>:
+    text: root.robot["robot_name"]
+
+    IconLeftWidget:
+        MDCheckbox:
+            id: radio_check
+            group: "robots"
+            on_release: self.active = True
+
+    IconRightWidget:
+        icon: "pencil"
+        disabled: not radio_check.active
+        opacity: int(radio_check.active)
+        on_release: root.edit_robot()
 """
 )

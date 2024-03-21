@@ -104,12 +104,6 @@ class AppRoot(MDScreenManager):
             # Return to the screen that viewed the parent robot
             self.screens_history.pop()
 
-        if current_screen_name in ["robot", "replicated_robot"]:
-            # Leave information to the viewing screen about the last examined robot
-            self.get_screen(current_screen_name).last_viewed_robot_file = (
-                current_screen_kwargs.get("robot_file")
-            )
-
         if len(self.screens_history) > 0:
             screen_to_go_name_and_kwargs = self.screens_history.pop()
             if type(screen_to_go_name_and_kwargs) == str:
@@ -117,6 +111,12 @@ class AppRoot(MDScreenManager):
                 screen_to_go_kwargs = {}
             else:
                 screen_to_go_name, screen_to_go_kwargs = screen_to_go_name_and_kwargs
+
+            if current_screen_name in ["robot", "replicated_robot"]:
+                # Leave information to the viewing screen about the last examined robot
+                self.get_screen(screen_to_go_name).selected_robot_file = (
+                    current_screen_kwargs.get("robot_file")
+                )
 
             self.goto_screen(screen_to_go_name, direction="back", **screen_to_go_kwargs)
 

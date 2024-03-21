@@ -61,6 +61,7 @@ def create_chat(chat_id):
                 "chat_summary": DEFAULT_CHAT_SUMMARY,
                 "chat_created_at": created_at,
                 "chat_modified_at": created_at,
+                "chat_robot_file": None,
             },
             f,
             indent=2,
